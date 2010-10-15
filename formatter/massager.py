@@ -1,7 +1,7 @@
 from lxml import html
 
 
-class Rule:
+class Rule():
     "A rule for doing a tree manipulation"
 
     def transform(self,element):
@@ -16,7 +16,7 @@ def already_massaged(element):
         return False
 
 
-class Massager:
+class Massager():
 
     def rules():
         """

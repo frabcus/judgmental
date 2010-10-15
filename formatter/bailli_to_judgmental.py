@@ -65,14 +65,13 @@ class BtoJ(Massager):
 
         def change(a,b):
             x = t.find(a)
-            print x
             x.getparent().replace(t.find(a),page.find(b))
 
         t = self.template()
         r = t.getroot()
 
-        change("//our-title","//title")
-        change("//our-court-name","//h1")
-        change("//our-opinion",'//div[@class="opinion"]')
+        change("//title","//title")
+        change('//div[@id="content"]/h1','//td[@align="left"]/h1')
+        change('//div[@class="opinion"]','//div[@class="opinion"]')
 
         return t
