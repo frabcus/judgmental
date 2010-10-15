@@ -1,0 +1,149 @@
+/* Law styling */
+
+/* Body ----------------------------------- */
+
+body {
+	font-size:62.5%;
+	font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
+	font-weight:400;
+	color:#444;
+}
+
+* {
+	padding: 0;
+	margin: 0;
+}
+html, body {
+	height: 100%;
+}
+#page_container {
+	min-height: 100%;
+	height:auto !important;
+	height:100%;
+	width: 100%;
+}
+* html #page_inner {
+	height: 100%;
+}
+
+/* Main Layout Containers ------------------------------------- */
+
+#page_inner {
+	width:960px;
+	margin:10px auto;
+}
+	#header {
+		width:960px;
+		height:130px;
+	}
+	#nav {
+		width:240px;
+		float:left;
+	}
+	#content {
+		width:700px;
+		float:right;
+		margin:10px;
+		padding-bottom:40px;
+	}
+	#footer {
+		width:960px;
+		clear:both;
+	}
+	
+/* Navigation ------------------------------------------------ */
+	
+	#site_title h1 { padding-top:10px;}
+	#site_title a {
+		background:url('logo.png') top left no-repeat;
+		width:402px; height:84px;
+		margin:10px;
+		display:block;
+	}
+	#site_title a span { display:none; }
+		#nav ul {
+			margin:10px;
+		}
+		#nav ul li a {
+			display:block;
+			padding:10px;
+/*			background:-moz-linear-gradient(top, #2649D5, #039);*/
+			background:#999;
+			color:#fff;
+			margin:5px 0;
+			text-decoration:none;
+			font-size:1.4em;
+			-moz-border-radius:5px;
+		}
+			#nav ul li a:hover {
+				background:#bbb;
+			}
+
+/* Content --------------------------------------------------- */
+
+	#content {
+		font-size:1.2em;	
+		line-height:1.6em;
+	}
+		#content h1 {
+			font-size:2em;
+			padding-bottom:10px;
+			border-bottom:1px solid #888;
+			margin-bottom:10px;
+			color:#444;
+		}
+		#breadcrumb {
+			margin:10px 0;
+/*			background:-moz-linear-gradient(top, #cacaca, #f0f0f0);*/
+			border:1px solid #999;
+			padding:10px;
+			-moz-border-radius:5px;
+			background:#eee;
+		}
+			#breadcrumb .you_are {
+				font-weight:bold;
+			}
+			#breadcrumb a {
+				text-decoration:none;
+				color:#666;
+				padding-right:20px;
+				background:url(bullet_go.png) center right no-repeat;
+			}
+			#breadcrumb a:hover {
+				text-decoration:underline;
+			}
+		.meta {
+/*			background:-moz-linear-gradient(top, #cacaca, #f0f0f0);*/
+			border:1px solid #999;
+			-moz-border-radius:5px;
+			padding:10px;
+			margin:10px 0;
+			background:#eee;
+		}
+		.date {
+			background:#eee url('date.png') 10px 10px no-repeat;
+			-moz-border-radius:5px;
+			padding:10px 10px 10px 35px;
+			margin:10px 0;
+			border:1px solid #999;			
+		}
+		.parties {
+			font-size:1.6em;
+			line-height:1.8em;
+		}
+		p { margin-bottom:10px; }
+			.judge { font-weight:bold;}
+			
+		.permission {
+			text-align:right;
+			color:#999;
+			font-size:0.9em;
+			line-height:1.2em;
+		}
+			.permission a {
+				color:#777;
+			}
+			
+			
+		
+		#footer { display: none; } /* probably dont need this div a all at the moment... */
