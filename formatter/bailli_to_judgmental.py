@@ -2,6 +2,7 @@ from massager import *
 from lxml.etree import Element,XML
 
 
+
 class EmptyParagraphsToBreaks(Rule):
     "<p /> --> <br />"
     
@@ -53,12 +54,25 @@ class BtoJ(Massager):
              ReplaceHomemadeTagsWithSpanOrDiv()]
         
         return l
+
+    def template(self):
+        return html.parse(self.template_filename())
         
-    def post_process(self,element):
+    def template_filename(self):
+        return "template.html"
+                        
+    def restructure(self,page):
 
-        # Add the CSS
-        csstext = '<link rel="stylesheet" href="style.css" type="text/css" media="all" />'
-        css = XML(csstext)
-        element.find("head").insert(3,css)
+        def change(a,b):
+            x = t.find(a)
+            print x
+            x.getparent().replace(t.find(a),page.find(b))
 
+        t = self.template()
+        r = t.getroot()
 
+        change("//our-title","//title")
+        change("//our-court-name","//h1")
+        change("//our-opinion",'//div[@class="opinion"]')
+
+        return t

@@ -29,20 +29,16 @@ class Massager():
         "takes page at 'location', massages, and returns element tree."
         page = html.parse(location)
         self.massage(page.getroot())
-        self.post_process(page.getroot())
-        return page
+        return self.restructure(page)
 
     def massage_page_to_file(self,inlocation,outlocation):
         "Takes page at 'inlocation', massages, saves to 'outlocation'."
         page = html.parse(inlocation)
         self.massage(page.getroot())
-        self.post_process(page.getroot())
+        page = self.restructure(page)
         s = html.tostring(page, pretty_print = True)
         outfile = open(outlocation,'w')
         outfile.write(s)
-
-    def post_process(self,element):
-        pass
 
     def submassage(self,element):
         for c in element.getchildren():
@@ -73,4 +69,5 @@ class Massager():
 
         self.has_been_massaged = True
 
-
+    def restructure(self,element):
+        pass
