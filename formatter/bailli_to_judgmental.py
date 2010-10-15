@@ -1,5 +1,5 @@
 from massager import *
-from lxml.etree import Element
+from lxml.etree import Element,XML
 
 
 class EmptyParagraphsToBreaks(Rule):
@@ -41,4 +41,11 @@ class BtoJ(Massager):
         
         return l
         
-                
+    def post_process(self,element):
+
+        # Add the CSS
+        csstext = '<link rel="stylesheet" href="style.css" type="text/css" media="all" />'
+        css = XML(csstext)
+        element.find("head").insert(3,css)
+
+

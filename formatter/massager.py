@@ -29,14 +29,19 @@ class Massager():
         "takes page at 'location', massages, and returns element tree."
         page = html.parse(location)
         self.massage(page.getroot())
+        self.post_process(page.getroot())
         return page
 
     def massage_page_to_file(self,inlocation,outlocation):
         "Takes page at 'inlocation', massages, saves to 'outlocation'."
         page = html.parse(inlocation)
         self.massage(page.getroot())
+        self.post_process(page.getroot())
         s = html.tostring(page, pretty_print = True)
         outlocation.write(s)
+
+    def post_process(self,element):
+        pass
 
     def submassage(self,element):
         for c in element.getchildren():
