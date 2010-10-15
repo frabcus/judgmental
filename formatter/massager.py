@@ -38,7 +38,8 @@ class Massager():
         self.massage(page.getroot())
         self.post_process(page.getroot())
         s = html.tostring(page, pretty_print = True)
-        outlocation.write(s)
+        outfile = open(outlocation,'w')
+        outfile.write(s)
 
     def post_process(self,element):
         pass
