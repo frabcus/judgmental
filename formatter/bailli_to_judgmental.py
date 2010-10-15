@@ -15,29 +15,42 @@ class EmptyParagraphsToBreaks(Rule):
 
 
 
-class EntityThirteenSucks(Rule):
-    "kill &#13;"
+class ReplaceHomemadeTagsWithSpanOrDiv(Rule):
 
     def transform(self,element):
-        
-        done_something = False
-        if (element.text is not None) and "\n\r" in element.text:
-            element.text = element.text.replace("\n\r","\n")
-            done_something = True
-        if (element.tail is not None) and "\n\r" in element.tail:
-            element.tail = element.tail.replace("\n\r","\n")
-            done_something = True
-        if done_something:
-            print "Removing entity 13"
-        return done_something
-        
+
+        t = element.tag
+
+        to_span = ["judge"]
+        to_div = ["opinion"]
+
+        if t in to_span:
+            element.tag = "span"
+            element.attrib["class"] = t
+
+            # This is too ad-hoc; only works right for "judge"
+            for b in element.findall("b"):
+                b.drop_tag() 
+
+            return True
+
+        elif t in to_div:
+            element.tag = "div"
+            element.attrib["class"] = t
+
+            return True
+
+        return False
+
+    
 
 
 
 class BtoJ(Massager):
 
     def rules(self):
-        l = [EmptyParagraphsToBreaks()]
+        l = [EmptyParagraphsToBreaks(),
+             ReplaceHomemadeTagsWithSpanOrDiv()]
         
         return l
         
