@@ -16,42 +16,10 @@ class EmptyParagraphsToBreaks(Rule):
 
 
 
-class ReplaceHomemadeTagsWithSpanOrDiv(Rule):
-
-    def transform(self,element):
-
-        t = element.tag
-
-        to_span = ["judge"]
-        to_div = ["opinion"]
-
-        if t in to_span:
-            element.tag = "span"
-            element.attrib["class"] = t
-
-            # This is too ad-hoc; only works right for "judge"
-            for b in element.findall("b"):
-                b.drop_tag() 
-
-            return True
-
-        elif t in to_div:
-            element.tag = "div"
-            element.attrib["class"] = t
-
-            return True
-
-        return False
-
-    
-
-
-
 class BtoJ(Massager):
 
     def rules(self):
-        l = [EmptyParagraphsToBreaks(),
-             ReplaceHomemadeTagsWithSpanOrDiv()]
+        l = [EmptyParagraphsToBreaks()]
         
         return l
 
@@ -65,13 +33,20 @@ class BtoJ(Massager):
 
         def change(a,b):
             x = t.find(a)
-            x.getparent().replace(t.find(a),page.find(b))
+            y = page.find(b)
+            self.massage(y)
+            x.getparent().replace(x,y)
 
         t = self.template()
         r = t.getroot()
 
+        # title
         change("//title","//title")
+
+        # the bulk of the text
+        change('//div[@class="opinion"]','//opinion')
+
+        # the court name
         change('//div[@id="content"]/h1','//td[@align="left"]/h1')
-        change('//div[@class="opinion"]','//div[@class="opinion"]')
 
         return t

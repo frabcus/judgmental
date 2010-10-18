@@ -1,19 +1,14 @@
 from lxml import html
 
 
+
 class Rule():
-    "A rule for doing a tree manipulation"
+    "A rule for doing a recursive tree manipulation"
 
     def transform(self,element):
         "Manipulates the element, returns whether a change has been made"
         return False
 
-
-def already_massaged(element):
-    try:
-        return element.has_been_massaged
-    except AttributeError:
-        return False
 
 
 class Massager():
@@ -28,13 +23,11 @@ class Massager():
     def massage_page(self,location):
         "takes page at 'location', massages, and returns element tree."
         page = html.parse(location)
-        self.massage(page.getroot())
         return self.restructure(page)
 
     def massage_page_to_file(self,inlocation,outlocation):
         "Takes page at 'inlocation', massages, saves to 'outlocation'."
         page = html.parse(inlocation)
-        self.massage(page.getroot())
         page = self.restructure(page)
         s = html.tostring(page, pretty_print = True)
         outfile = open(outlocation,'w')
@@ -48,6 +41,12 @@ class Massager():
         """
         Recursively applies all the rules in turn.
         """
+
+        def already_massaged(element):
+            try:
+                return element.has_been_massaged
+            except AttributeError:
+                return False
         
         if already_massaged(element):
             return False
