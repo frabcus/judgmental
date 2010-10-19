@@ -39,7 +39,8 @@ class Massager():
 
     def massage(self,element):
         """
-        Recursively applies all the rules in turn.
+        Recursively applies all the rules in turn. Returns the element, for
+        ease of chaining.
         """
 
         def already_massaged(element):
@@ -67,6 +68,8 @@ class Massager():
                     break
 
         self.has_been_massaged = True
+
+        return element
 
     def restructure(self,element):
         pass

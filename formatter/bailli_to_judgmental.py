@@ -15,11 +15,30 @@ class EmptyParagraphsToBreaks(Rule):
         return done_something
 
 
+class CorrectTypos(Rule):
+    "Corrects some typographical errors found in the text"
+
+    def transform(self,element):
+        typos = [("Decisons","Decisions")]
+        
+        done_something = False
+        for (old,new) in typos:
+            if old in (element.text or ""):
+                element.text = element.text.replace(old,new)
+                done_something = True
+            if old in (element.tail or ""):
+                element.tail = element.tail.replace(old,new)
+                done_something = True
+        return done_something
+        
+
+
 
 class BtoJ(Massager):
 
     def rules(self):
-        l = [EmptyParagraphsToBreaks()]
+        l = [EmptyParagraphsToBreaks(),
+             CorrectTypos()]
         
         return l
 
@@ -34,27 +53,27 @@ class BtoJ(Massager):
         t = self.template()
 
         def extract(a):
-            y = page.find(a)
-            self.massage(y)
-            return y
+            return self.massage(page.find(a))
 
         def substitute(a,y):
             x = t.find(a)
             x.getparent().replace(x,y)
 
         title = extract("//title")
-        court_name = extract('//td[@align="left"]/h1')
+        court_name_h1 = extract('//td[@align="left"]/h1')
+        court_name = court_name_h1.text
         bailii_url = extract('//small/i').text
-        citation = [x for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
+        citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
         date = extract('//p[@align="RIGHT"]').text
-        parties = " ".join(x.text for x in page.findall('//td[@align="center"]'))
+        parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
 
         substitute("//title",title)
 
         substitute('//div[@class="opinion"]',extract('//opinion'))
 
-        substitute('//div[@id="content"]/h1',court_name)
+        substitute('//div[@id="content"]/h1',court_name_h1)
 
+        t.find('//a[@class="court"]').text = court_name
         t.find('//div[@class="meta"]').text = citation
         t.find('//div[@class="date"]').text = date
         t.find('//div[@class="parties"]').text = parties
