@@ -31,22 +31,32 @@ class BtoJ(Massager):
                         
     def restructure(self,page):
 
-        def change(a,b):
-            x = t.find(a)
-            y = page.find(b)
+        t = self.template()
+
+        def extract(a):
+            y = page.find(a)
             self.massage(y)
+            return y
+
+        def substitute(a,y):
+            x = t.find(a)
             x.getparent().replace(x,y)
 
-        t = self.template()
-        r = t.getroot()
+        title = extract("//title")
+        court_name = extract('//td[@align="left"]/h1')
+        bailii_url = extract('//small/i').text
+        citation = [x for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
+        date = extract('//p[@align="RIGHT"]').text
+        parties = " ".join(x.text for x in page.findall('//td[@align="center"]'))
 
-        # title
-        change("//title","//title")
+        substitute("//title",title)
 
-        # the bulk of the text
-        change('//div[@class="opinion"]','//opinion')
+        substitute('//div[@class="opinion"]',extract('//opinion'))
 
-        # the court name
-        change('//div[@id="content"]/h1','//td[@align="left"]/h1')
+        substitute('//div[@id="content"]/h1',court_name)
+
+        t.find('//div[@class="meta"]').text = citation
+        t.find('//div[@class="date"]').text = date
+        t.find('//div[@class="parties"]').text = parties
 
         return t

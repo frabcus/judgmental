@@ -3,7 +3,7 @@ from lxml import html
 
 
 class Rule():
-    "A rule for doing a recursive tree manipulation"
+    "A recursive tree manipulation"
 
     def transform(self,element):
         "Manipulates the element, returns whether a change has been made"
