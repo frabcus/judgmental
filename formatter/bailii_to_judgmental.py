@@ -5,10 +5,15 @@ import re
 
 class EmptyParagraphsToBreaks(Rule):
     "<p /> --> <br />"
+    "<blockquote /> --> <br />"
     
     def transform(self,element):
         done_something = False
         for e in element.findall("p"):
+            if e.getchildren() == [] and (e.text or "").strip() == "":
+                element.replace(e, Element("br"))
+                done_something = True
+        for e in element.findall("blockquote"):
             if e.getchildren() == [] and (e.text or "").strip() == "":
                 element.replace(e, Element("br"))
                 done_something = True
