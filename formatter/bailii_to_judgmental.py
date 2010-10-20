@@ -1,5 +1,13 @@
+"""
+Converts the Bailii archive into nicer more formulaic HTML.
+"""
+
 from massager import *
 from lxml.etree import Element,XML
+
+# the debian package "python-dateutil" is useful
+from dateutil.parser import parse as dateparse
+
 import re
 
 
@@ -64,6 +72,8 @@ class BtoJ(Massager):
             x = t.find(a)
             x.getparent().replace(x,y)
 
+        converter = extract('head/meta[@name="Converter"]').attrib["content"]
+
         title = extract("//title")
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
@@ -72,12 +82,20 @@ class BtoJ(Massager):
         citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
         if citation[:7]=="Cite as":
             citation = citation[7:].strip(":").strip()
-        
-        date = extract('//p[@align="RIGHT"]').text
-        year = re.compile("((1[89]|20)[0-9][0-9])").search(date).groups()[0]
+
+        if converter == "\\converter JU convhtm149":
+            raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
+        else:
+            raw_date = extract('//p[@align="RIGHT"]').text        
+
+        # structured date
+        date = dateparse(raw_date)
+
+        # preferred string representation of date
+        date_str = date.strftime("%d %B %Y")
         
         parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
-        description = "%s [%s]"%(parties,year)
+        description = "%s [%s]"%(parties,date.year)
 
         substitute("//title",title)
 
@@ -87,7 +105,7 @@ class BtoJ(Massager):
 
         t.find('//a[@id="bc-courtname"]').text = court_name
         t.find('//span[@id="meta-citation"]').text = citation
-        t.find('//div[@id="meta-date"]').text = date
+        t.find('//div[@id="meta-date"]').text = date_str
         t.find('//div[@id="subtitle-parties"]').text = parties
         t.find('//span[@id="bc-description"]').text = description
 
