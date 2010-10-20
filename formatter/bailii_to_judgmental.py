@@ -77,16 +77,30 @@ class BtoJ(Massager):
         title = extract("//title")
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
+
+        if converter == "\\converter JU convhtm149":
+            raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
+            
+            party_line = page.find("//ol/blockquote/i")
+            if party_line is not None:
+                parties = " v. ".join(x.strip() for x in re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text).groups())
+            else:
+                parties = ""
+
+            substitute('//div[@class="opinion"]',extract('//ol'))
+            
+        else:
+            print converter
+            raw_date = extract('//p[@align="RIGHT"]').text        
+            parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
+            substitute('//div[@class="opinion"]',extract('//opinion'))
+
+        ### should get this by other means?
         bailii_url = extract('//small/i').text
 
         citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
         if citation[:7]=="Cite as":
             citation = citation[7:].strip(":").strip()
-
-        if converter == "\\converter JU convhtm149":
-            raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
-        else:
-            raw_date = extract('//p[@align="RIGHT"]').text        
 
         # structured date
         date = dateparse(raw_date)
@@ -94,12 +108,14 @@ class BtoJ(Massager):
         # preferred string representation of date
         date_str = date.strftime("%d %B %Y")
         
-        parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
-        description = "%s [%s]"%(parties,date.year)
+        # short name of case
+        if parties!="":
+            description = "%s [%s]"%(parties,date.year)
+        else:
+            # can we do better?
+            description = citation
 
         substitute("//title",title)
-
-        substitute('//div[@class="opinion"]',extract('//opinion'))
 
         substitute('//div[@id="content"]/h1',court_name_h1)
 
