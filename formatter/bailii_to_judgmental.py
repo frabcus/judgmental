@@ -2,13 +2,15 @@
 Converts the Bailii archive into nicer more formulaic HTML.
 """
 
-from massager import *
+
 from lxml.etree import Element,XML
+import re
 
 # the debian package "python-dateutil" is useful
 from dateutil.parser import parse as dateparse
 
-import re
+from massager import *
+
 
 
 class EmptyParagraphsToBreaks(Rule):
@@ -73,25 +75,32 @@ class BtoJ(Massager):
             x.getparent().replace(x,y)
 
         converter = extract('head/meta[@name="Converter"]').attrib["content"]
+        conv_no = int(converter[-3:])
 
         title = extract("//title")
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
-        if converter == "\\converter JU convhtm149":
-            raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
+        raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
+
+        if conv_no in [149,151,157]:
             
             party_line = page.find("//ol/blockquote/i")
             if party_line is not None:
-                parties = " v. ".join(x.strip() for x in re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text).groups())
+                app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text)
+                if app_resp is not None:
+                    parties = " v. ".join(x.strip() for x in app_res.groups())
+                else:
+                    parties = ""
             else:
                 parties = ""
 
             substitute('//div[@class="opinion"]',extract('//ol'))
-            
+
         else:
-            print converter
-            raw_date = extract('//p[@align="RIGHT"]').text        
+            print "Unrecognised converter: "+converter
+            ### do we need this?
+            # raw_date = extract('//p[@align="RIGHT"]').text        
             parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
             substitute('//div[@class="opinion"]',extract('//opinion'))
 
