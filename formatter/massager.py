@@ -50,7 +50,7 @@ class Massager():
                 return False
         
         if already_massaged(element):
-            return False
+            return element
 
         self.submassage(element)
 
