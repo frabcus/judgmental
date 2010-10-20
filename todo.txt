@@ -3,8 +3,12 @@ Script to format HTML
 Integrate HTML with design
 Make index pages and navigation
 
-Write copy
-Hosting
+Takedown links
+
+Finish writing about copy
+Help needs section about court data protection redaction policy
+
+
 
 
 
