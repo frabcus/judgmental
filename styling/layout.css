@@ -120,6 +120,9 @@ html, body {
 			margin:10px 0;
 			background:#eee;
 		}
+			.meta .cite_as {
+				font-weight:bold;
+			}
 		.date {
 			background:#eee url('date.png') 10px 10px no-repeat;
 			-moz-border-radius:5px;
