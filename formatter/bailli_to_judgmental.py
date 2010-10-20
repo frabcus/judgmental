@@ -1,6 +1,6 @@
 from massager import *
 from lxml.etree import Element,XML
-
+import re
 
 
 class EmptyParagraphsToBreaks(Rule):
@@ -63,9 +63,16 @@ class BtoJ(Massager):
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
         bailii_url = extract('//small/i').text
+
         citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
+        if citation[:7]=="Cite as":
+            citation = citation[7:].strip(":").strip()
+        
         date = extract('//p[@align="RIGHT"]').text
+        year = re.compile("((1[89]|20)[0-9][0-9])").search(date).groups()[0]
+        
         parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
+        description = "%s [%s]"%(parties,year)
 
         substitute("//title",title)
 
@@ -73,9 +80,10 @@ class BtoJ(Massager):
 
         substitute('//div[@id="content"]/h1',court_name_h1)
 
-        t.find('//a[@class="court"]').text = court_name
-        t.find('//div[@class="meta"]').text = citation
-        t.find('//div[@class="date"]').text = date
-        t.find('//div[@class="parties"]').text = parties
+        t.find('//a[@id="bc-courtname"]').text = court_name
+        t.find('//span[@id="meta-citation"]').text = citation
+        t.find('//div[@id="meta-date"]').text = date
+        t.find('//div[@id="subtitle-parties"]').text = parties
+        t.find('//span[@id="bc-description"]').text = description
 
         return t
