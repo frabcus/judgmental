@@ -128,12 +128,24 @@ class BtoJ(Massager):
         court_name = court_name_h1.text
 
         def find_date():
+
+            # find it in parentheses in the title tag
             for raw_date in re.compile("\\(([^)]*)\\)").finditer(page.find("head/title").text):
                 s = raw_date.groups()[0]
                 try:
                     return dateparse(s)
                 except ValueError:
                     pass
+
+            # find it in parentheses in a meta title tag
+            metatitle = page.find('head/meta[@name="Title"]')
+            for raw_date in re.compile("\\(([^)]*)\\)").finditer(metatitle.attrib["content"]):
+                s = raw_date.groups()[0]
+                try:
+                    return dateparse(s)
+                except ValueError:
+                    pass
+
             raise CantFindDate()
 
         date = find_date()
