@@ -193,7 +193,9 @@ class BtoJ(Massager):
         date = find_date()
 
         # preferred string representation of date
-        date_str = date.strftime("%d %B %Y")
+        # date.strftime("%d %B %Y") doesn't work for years < 1900
+        months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+        date_str = "%d %s %d"%(date.day, months[date.month-1], date.year)
 
         ### should get this by other means?
         bailii_url = extract('//small/i').text
