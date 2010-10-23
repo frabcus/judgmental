@@ -2,6 +2,11 @@
 Converts the Bailii archive into nicer more formulaic HTML.
 """
 
+# To do:
+#  - recognise things that should be ordered lists
+
+
+
 
 from lxml.etree import Element,XML
 import re
@@ -10,6 +15,20 @@ import re
 from dateutil.parser import parse as dateparse
 
 from massager import *
+
+
+
+class CantFindElement(Exception):
+    def __init__(self,searchstring):
+        self.searchstring = searchstring
+    def __str__(self):
+        return "Can't find '%s'"%self.searchstring
+
+
+
+class CantFindDate(Exception):
+    def __str__(self):
+        return "Can't find a date, probably because I'm unattractive"
 
 
 
@@ -77,24 +96,59 @@ class BtoJ(Massager):
         t = self.template()
 
         def extract(a):
-            return self.massage(page.find(a))
+            x = page.find(a)
+            if x is None:
+                raise CantFindElement(a)
+            return self.massage(x)
 
         def substitute(a,y):
             x = t.find(a)
             x.getparent().replace(x,y)
 
-        converter = extract('head/meta[@name="Converter"]').attrib["content"]
-        conv_no = int(converter[-3:])
+        def report(s):
+            print "     %s"%s
+
+        try:
+            converter = extract('head/meta[@name="Converter"]').attrib["content"]
+            conv_no = int(converter[-3:])
+        except CantFindElement:
+            converter = "None supplied"
+            conv_no = "0"
 
         title = extract("//title")
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
-        raw_date = re.compile("\\((.*)\\)").search(page.find("head/title").text).groups()[0]
+        def find_date():
+            for raw_date in re.compile("\\(([^)]*)\\)").finditer(page.find("head/title").text):
+                s = raw_date.groups()[0]
+                try:
+                    return dateparse(s)
+                except ValueError:
+                    pass
+            raise CantFindDate()
 
-        if conv_no in [149,151,157]:
-            
-            party_line = page.find("//ol/blockquote/i")
+        date = find_date()
+
+        # preferred string representation of date
+        date_str = date.strftime("%d %B %Y")
+
+        ### should get this by other means?
+        bailii_url = extract('//small/i').text
+
+        citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
+        if citation[:7]=="Cite as":
+            citation = citation[7:].strip(":").strip()
+
+        opinion_as_ol = page.find("body/ol")
+        opinion_as_opinion = page.find("//opinion")
+        
+        if opinion_as_ol is not None:
+
+            if conv_no not in [149,151,155,157]:
+                report("New <ol> converter: %d"%conv_no)
+ 
+            party_line = opinion_as_ol.find("blockquote/i")
             if party_line is not None:
                 app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text)
                 if app_resp is not None:
@@ -104,27 +158,28 @@ class BtoJ(Massager):
             else:
                 parties = ""
 
+            opinion_as_ol = self.massage(opinion_as_ol)
             substitute('//div[@class="opinion"]',extract('//ol'))
 
-        else:
-            print "Unrecognised converter: "+converter
-            ### do we need this?
-            # raw_date = extract('//p[@align="RIGHT"]').text        
+        elif opinion_as_opinion is not None:
+
+            report("New <opinion> converter: %d"%conv_no)
+            report(page.getpath(opinion_as_opinion))
+
             parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
+            opinion_as_opinion = self.massage(opinion_as_opinion)
             substitute('//div[@class="opinion"]',extract('//opinion'))
 
-        ### should get this by other means?
-        bailii_url = extract('//small/i').text
+        else:
+            # try the whole body, after any headmatter
 
-        citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
-        if citation[:7]=="Cite as":
-            citation = citation[7:].strip(":").strip()
-
-        # structured date
-        date = dateparse(raw_date)
-
-        # preferred string representation of date
-        date_str = date.strftime("%d %B %Y")
+            body = page.find("body")
+            while body.getchildren()[0].tag != "p":
+                body.getchildren()[0].drop_tree()
+            parties = ""
+            opinion = body.getchildren()[0]
+            opinion = self.massage(opinion)
+            substitute('//div[@class="opinion"]',opinion)
         
         # short name of case
         if parties!="":
