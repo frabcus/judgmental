@@ -3,6 +3,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 """
 
 # To do:
+#  - improve recognition and handling of metadata
 #  - recognise things that should be ordered lists
 
 
@@ -150,6 +151,7 @@ class BtoJ(Massager):
                 if x.tail[:8]=="Cite as:":
                     return x.tail[8:].strip()
 
+            # does the title have the from "citation (date)"
             title_cite = re.compile("^(.*)\\(.*\\)$").match(title_text)
             if title_cite is not None:
                 return title_cite.groups()[0].strip()
@@ -168,7 +170,7 @@ class BtoJ(Massager):
  
             party_line = opinion_as_ol.find("blockquote/i")
             if party_line is not None:
-                app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text)
+                app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text or "")
                 if app_resp is not None:
                     parties = " v. ".join(x.strip() for x in app_res.groups())
                 else:
