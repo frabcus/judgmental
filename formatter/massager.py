@@ -1,4 +1,5 @@
 from lxml import html
+from cStringIO import StringIO
 
 
 
@@ -20,18 +21,21 @@ class Massager():
         """
         pass
 
-    def massage_page(self,location):
-        "takes page at 'location', massages, and returns element tree."
-        page = html.parse(location)
-        return self.restructure(page)
-
-    def massage_page_to_file(self,inlocation,outlocation):
-        "Takes page at 'inlocation', massages, saves to 'outlocation'."
-        page = html.parse(inlocation)
+    def read_and_restructure(self,inlocation,outlocation):
+        infile = open(inlocation,'r')
+        midfile = StringIO()
+        self.preprocess(infile,midfile)
+        midfile.seek(0)
+        page = html.parse(midfile)
         page = self.restructure(page)
         s = html.tostring(page, pretty_print = True)
         outfile = open(outlocation,'w')
         outfile.write(s)
+
+    def preprocess(self,inf,outf):
+        "Default preprocessor routine"
+        for l in inf:
+            outf.write(l)
 
     def submassage(self,element):
         for c in element.getchildren():
