@@ -153,8 +153,11 @@ class BtoJ(Massager):
 
         def find_date():
 
+            # parenthesised search object
+            r = re.compile("\\(([^()]*)\\)")
+
             # find it in parentheses in the title tag
-            for raw_date in re.compile("\\(([^)]*)\\)").finditer(remove_nb_space(page.find("head/title").text)):
+            for raw_date in r.finditer(remove_nb_space(page.find("head/title").text)):
                 s = raw_date.groups()[0]
                 try:
                     return dateparse(s)
@@ -166,7 +169,7 @@ class BtoJ(Massager):
             # find it in parentheses in a meta title tag
             metatitle = page.find('head/meta[@name="Title"]')
             if metatitle is not None:
-                for raw_date in re.compile("\\(([^)]*)\\)").finditer(remove_nb_space(metatitle.attrib["content"])):
+                for raw_date in r.finditer(remove_nb_space(metatitle.attrib["content"])):
                     s = raw_date.groups()[0]
                     try:
                         return dateparse(s)
