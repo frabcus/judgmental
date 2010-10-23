@@ -32,6 +32,7 @@ class CantFindDate(Exception):
         return "Can't find a date, probably because I'm unattractive"
 
 
+
 class CantFindCitation(Exception):
     def __str__(self):
         return "Can't find a citation. Sucks to be us."
@@ -55,6 +56,7 @@ class EmptyParagraphsToBreaks(Rule):
         return done_something
 
 
+
 class CorrectTypos(Rule):
     "Corrects some typographical errors found in the text"
 
@@ -71,7 +73,6 @@ class CorrectTypos(Rule):
                 done_something = True
         return done_something
         
-
 
 
 class BtoJ(Massager):
@@ -119,7 +120,7 @@ class BtoJ(Massager):
             conv_no = int("".join(c for c in converter if c.isdigit()))
         except CantFindElement:
             converter = "None supplied"
-            conv_no = "0"
+            conv_no = 0
 
         title = extract("//title")
         title_text = title.text
