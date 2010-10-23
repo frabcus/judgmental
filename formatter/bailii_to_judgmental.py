@@ -154,7 +154,7 @@ class BtoJ(Massager):
         def find_date():
 
             # parenthesised search object
-            r = re.compile("\\(([^()]*)\\)")
+            r = re.compile("\\(([^()]*)($|\\))")
 
             # find it in parentheses in the title tag
             for raw_date in r.finditer(remove_nb_space(page.find("head/title").text)):
