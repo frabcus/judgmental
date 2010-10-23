@@ -54,7 +54,10 @@ class EmptyParagraphsToBreaks(Rule):
             if e.getchildren() == [] and (e.text or "").strip() == "":
                 element.replace(e, Element("br"))
                 done_something = True
-        return done_something
+        if done_something:
+            return element
+        else:
+            return None
 
 
 
@@ -72,8 +75,10 @@ class CorrectTypos(Rule):
             if old in (element.tail or ""):
                 element.tail = element.tail.replace(old,new)
                 done_something = True
-        return done_something
-
+        if done_something:
+            return element
+        else:
+            return None
 
 
 class UndoNestedTitles(Rule):
@@ -81,12 +86,13 @@ class UndoNestedTitles(Rule):
 
     def transform(self,element):
         if element.tag != "title":
-            return False
-        if element.find("title") is not None:
+            return None
+        t = element.find("title")
+        if t is not None:
             element.drop_tag()
-            return True
+            return t
         else:
-            return False
+            return None
         
 
 
@@ -139,13 +145,12 @@ class BtoJ(Massager):
             conv_no = 0
 
         title = extract("//title")
-        title_text = title.text
+        title_text = title.text or ""
         
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
         def remove_nb_space(s):
-            s = s or ""
             try:
                 return s.replace(u"\xA0"," ")
             except UnicodeDecodeError:
@@ -157,14 +162,12 @@ class BtoJ(Massager):
             r = re.compile("\\(([^()]*)($|\\))")
 
             # find it in parentheses in the title tag
-            for raw_date in r.finditer(remove_nb_space(page.find("head/title").text)):
+            for raw_date in r.finditer(remove_nb_space(title_text)):
                 s = raw_date.groups()[0]
                 try:
                     return dateparse(s)
                 except (ValueError, TypeError):
                     pass
-
-            report("no date in title: %s"%(page.find("head/title").text))
 
             # find it in parentheses in a meta title tag
             metatitle = page.find('head/meta[@name="Title"]')
@@ -175,6 +178,15 @@ class BtoJ(Massager):
                         return dateparse(s)
                     except (ValueError, TypeError):
                         pass
+
+            # try finding it at the end of the title tag in a more desperate fashion
+            raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
+            if raw_date:
+                s = raw_date.groups()[0]
+                try:
+                    return dateparse(s)
+                except (ValueError, TypeError):
+                    pass
 
             raise CantFindDate()
 
