@@ -51,6 +51,15 @@ class CorrectTypos(Rule):
 
 class BtoJ(Massager):
 
+    def preprocess(self,inf,outf):
+        "Discard everything up to the first '<'."
+        for l in inf:
+            if "<" in l:
+                outf.write(l[l.index("<"):])
+                break
+        for l in inf:
+            outf.write(l)
+
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
              CorrectTypos()]
