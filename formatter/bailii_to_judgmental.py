@@ -161,7 +161,7 @@ class BtoJ(Massager):
                 s = raw_date.groups()[0]
                 try:
                     return dateparse(s)
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
 
             report("no date in title: %s"%(page.find("head/title").text))
@@ -173,7 +173,7 @@ class BtoJ(Massager):
                     s = raw_date.groups()[0]
                     try:
                         return dateparse(s)
-                    except ValueError:
+                    except (ValueError, TypeError):
                         pass
 
             raise CantFindDate()
