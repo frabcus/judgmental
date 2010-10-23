@@ -15,6 +15,24 @@ class Rule():
 
 
 
+class SubmassageRule(Rule):
+    "This is the rule which applies rules to subtags. Mostly for internal use"
+
+    def __init__(self,parent,rules):
+        self.parent = parent
+        self.rules = rules
+
+    def transform(self,element):
+        done_something = None
+        for c in element.getchildren():
+            d = self.parent.inner_massage(c,self.rules)
+            if d is not None:
+                element.replace(c,d)
+                done_something = element
+        return done_something
+
+
+
 class Massager():
 
     def rules():
@@ -46,50 +64,49 @@ class Massager():
         ease of chaining.
         """
 
+        our_rules = self.rules()
+        our_rules.append(SubmassageRule(self,our_rules))
+
+        x = self.inner_massage(element,our_rules)
+        if x is None:
+            return element
+        else:
+            return x
+
+    def inner_massage(self, element, our_rules):
+        "Only returns the new element if it's changed, otherwise None"
+            
         def already_massaged(element):
             try:
                 return element.has_been_massaged
             except AttributeError:
                 return False
 
-        def submassage(element):
-            for c in element.getchildren():
-                d = inner_massage(c)
-                if d is not None:
-                    element.replace(c,d)
+        if already_massaged(element):
+            return None
 
-        def inner_massage(element):
-            "Only returns the new element if it's changed, otherwise None"
-            
-            if already_massaged(element):
-                return None
+        done_anything = False
+        stabilized = False
 
-            submassage(element)
-
-            stabilized = False
-
-            while not stabilized:
-                stabilized = True
+        while not stabilized:
+            stabilized = True
         
-                for r in self.rules():
+            for r in our_rules:
 
-                    a = r.transform(element)
+                a = r.transform(element)
 
-                    if a is not None:
-                        element = a
-                        stabilized = False
-                        submassage(element)
-                        break
+                if a is not None:
+                    element = a
+                    stabilized = False
+                    done_anything = True
+                    break
 
-            element.has_been_massaged = True
+        element.has_been_massaged = True
 
-            return element
-
-        x = inner_massage(element)
-        if x is None:
+        if done_anything:
             return element
         else:
-            return x
+            return None
 
     def restructure(self,element):
         pass
