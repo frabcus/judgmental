@@ -110,7 +110,7 @@ class BtoJ(Massager):
 
         try:
             converter = extract('head/meta[@name="Converter"]').attrib["content"]
-            conv_no = int(converter[-3:])
+            conv_no = int("".join(c for c in converter if c.isdigit()))
         except CantFindElement:
             converter = "None supplied"
             conv_no = "0"
