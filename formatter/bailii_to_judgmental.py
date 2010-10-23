@@ -5,6 +5,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 # To do:
 #  - improve recognition and handling of metadata
 #  - recognise things that should be ordered lists
+#  - normalise character encodings
 
 
 
@@ -29,7 +30,7 @@ class CantFindElement(Exception):
 
 class CantFindDate(Exception):
     def __str__(self):
-        return "Can't find a date, probably because I'm unattractive"
+        return "Can't find a date (probably because I'm unattractive)"
 
 
 
@@ -72,6 +73,20 @@ class CorrectTypos(Rule):
                 element.tail = element.tail.replace(old,new)
                 done_something = True
         return done_something
+
+
+
+class UndoNestedTitles(Rule):
+    "At least one page has nested <title> tags. This deals with that."
+
+    def transform(self,element):
+        if element.tag != "title":
+            return False
+        if element.find("title") is not None:
+            element.drop_tag()
+            return True
+        else:
+            return False
         
 
 
@@ -88,7 +103,8 @@ class BtoJ(Massager):
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
-             CorrectTypos()]
+             CorrectTypos(),
+             UndoNestedTitles()]
         
         return l
 
@@ -128,24 +144,34 @@ class BtoJ(Massager):
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
+        def remove_nb_space(s):
+            s = s or ""
+            try:
+                return s.replace(u"\xA0"," ")
+            except UnicodeDecodeError:
+                return s
+
         def find_date():
 
             # find it in parentheses in the title tag
-            for raw_date in re.compile("\\(([^)]*)\\)").finditer(page.find("head/title").text):
+            for raw_date in re.compile("\\(([^)]*)\\)").finditer(remove_nb_space(page.find("head/title").text)):
                 s = raw_date.groups()[0]
                 try:
                     return dateparse(s)
                 except ValueError:
                     pass
 
+            report("no date in title: %s"%(page.find("head/title").text))
+
             # find it in parentheses in a meta title tag
             metatitle = page.find('head/meta[@name="Title"]')
-            for raw_date in re.compile("\\(([^)]*)\\)").finditer(metatitle.attrib["content"]):
-                s = raw_date.groups()[0]
-                try:
-                    return dateparse(s)
-                except ValueError:
-                    pass
+            if metatitle is not None:
+                for raw_date in re.compile("\\(([^)]*)\\)").finditer(remove_nb_space(metatitle.attrib["content"])):
+                    s = raw_date.groups()[0]
+                    try:
+                        return dateparse(s)
+                    except ValueError:
+                        pass
 
             raise CantFindDate()
 
