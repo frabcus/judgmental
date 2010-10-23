@@ -31,6 +31,11 @@ class CantFindDate(Exception):
         return "Can't find a date, probably because I'm unattractive"
 
 
+class CantFindCitation(Exception):
+    def __str__(self):
+        return "Can't find a citation. Sucks to be us."
+
+
 
 class EmptyParagraphsToBreaks(Rule):
     "<p /> --> <br />"
@@ -116,6 +121,8 @@ class BtoJ(Massager):
             conv_no = "0"
 
         title = extract("//title")
+        title_text = title.text
+        
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
@@ -136,16 +143,27 @@ class BtoJ(Massager):
         ### should get this by other means?
         bailii_url = extract('//small/i').text
 
-        citation = [self.massage(x) for x in page.findall('//small/br') if x.tail[:7]=="Cite as"][0].tail
-        if citation[:7]=="Cite as":
-            citation = citation[7:].strip(":").strip()
+        def find_citation():
+
+            # try looking for a "Cite as:"
+            for x in page.findall('//small/br'):
+                if x.tail[:8]=="Cite as:":
+                    return x.tail[8:].strip()
+
+            title_cite = re.compile("^(.*)\\(.*\\)$").match(title_text)
+            if title_cite is not None:
+                return title_cite.groups()[0].strip()
+            
+            raise CantFindCitation()
+
+        citation = find_citation()
 
         opinion_as_ol = page.find("body/ol")
         opinion_as_opinion = page.find("//opinion")
         
         if opinion_as_ol is not None:
 
-            if conv_no not in [149,151,155,157]:
+            if conv_no not in [149,151,152,153,155,157]:
                 report("New <ol> converter: %d"%conv_no)
  
             party_line = opinion_as_ol.find("blockquote/i")
