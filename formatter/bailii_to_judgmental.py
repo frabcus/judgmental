@@ -173,7 +173,7 @@ class BtoJ(Massager):
             conv_no = 0
 
         title = extract("//title")
-        title_text = title.text or ""
+        title_text = (title.text or "").strip()
         
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
