@@ -247,7 +247,7 @@ class BtoJ(Massager):
         citation = find_citation()
 
         opinion_as_ol = page.find("body/ol")
-        opinion_as_opinion = page.find("//opinion")
+        opinion_as_opinion = page.find("body/doc/opinion")
         
         if opinion_as_ol is not None:
 
@@ -265,9 +265,6 @@ class BtoJ(Massager):
             substitute('//div[@class="opinion"]',extract('//ol'))
 
         elif opinion_as_opinion is not None:
-
-            report("New <opinion> converter: %d"%conv_no)
-            report(page.getpath(opinion_as_opinion))
 
             parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
             opinion_as_opinion = self.massage(opinion_as_opinion)
