@@ -3,11 +3,12 @@ Converts the Bailii archive into nicer more formulaic HTML.
 """
 
 # To do:
-#  - improve recognition and handling of metadata, especially parties
+#  - improve recognition of metadata, especially parties and judges
+#  - stash metadata for indexer
 #  - recognise things that should be ordered lists
 #  - normalise character encodings
 #  - are there any other massive unclosed tag configurations other than <li><a> ?
-
+#  - make blacklist obsolete by recognising empties
 
 
 
@@ -131,10 +132,10 @@ class BtoJ(Massager):
         "Discard everything up to the first '<'"
         for l in inf:
             if "<" in l:
-                outf.write(l[l.index("<"):])
+                outf.write(l[l.index("<"):].replace("\x85","").replace("\x92","'"))
                 break
         for l in inf:
-            outf.write(l)
+            outf.write(l.replace("\x85","").replace("\x92","'"))
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
@@ -182,6 +183,9 @@ class BtoJ(Massager):
 
         def find_date():
 
+            # parenthesised search object
+            r = re.compile("\\(([^()]*)($|\\))")
+
             def scan(s):
                 for raw_date in r.finditer(remove_nb_space(s or "")):
                     attempt(raw_date.groups()[0].strip())
@@ -198,9 +202,6 @@ class BtoJ(Massager):
                 except UnicodeDecodeError:
                     return s            
 
-            # parenthesised search object
-            r = re.compile("\\(([^()]*)($|\\))")
-
             try:
                 # find it in parentheses in the title tag
                 scan(title_text)
@@ -208,7 +209,7 @@ class BtoJ(Massager):
                 # find it in parentheses in a meta title tag
                 metatitle = page.find('head/meta[@name="Title"]')
                 if metatitle is not None:
-                    scan(metatitle.text)
+                    scan(metatitle.text) ### do I mean the content of that tag?
 
                 # try finding it at the end of the title tag in a more desperate fashion
                 raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
