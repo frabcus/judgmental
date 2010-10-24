@@ -6,6 +6,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 #  - improve recognition and handling of metadata
 #  - recognise things that should be ordered lists
 #  - normalise character encodings
+#  - are there any other massive unclosed tag setups other than <li><a> ?
 
 
 
@@ -26,13 +27,9 @@ class CantFindElement(Exception):
     def __str__(self):
         return "Can't find '%s'"%self.searchstring
 
-
-
 class CantFindDate(Exception):
     def __str__(self):
         return "Can't find a date (probably because I'm unattractive)"
-
-
 
 class CantFindCitation(Exception):
     def __str__(self):
@@ -81,6 +78,7 @@ class CorrectTypos(Rule):
             return None
 
 
+
 class UndoNestedTitles(Rule):
     "At least one page has nested <title> tags. This deals with that."
 
@@ -93,6 +91,25 @@ class UndoNestedTitles(Rule):
             return t
         else:
             return None
+
+
+
+class MendUnclosedTags(Rule):
+    "One page has some horrendous lists of <li><a>, all unclosed."
+
+    def transform(self,element):
+        done_something = False
+        while True:
+            culprit = element.find("li/a/li")
+            if culprit is not None:
+                done_something = True
+                n = element.index(culprit.getparent().getparent())
+                culprit.drop_tree()
+                element.insert(n+1,culprit)
+            elif done_something:
+                return element
+            else:
+                return None
         
 
 
@@ -110,7 +127,8 @@ class BtoJ(Massager):
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
              CorrectTypos(),
-             UndoNestedTitles()]
+             UndoNestedTitles(),
+             MendUnclosedTags()]
         
         return l
 
@@ -221,9 +239,6 @@ class BtoJ(Massager):
         
         if opinion_as_ol is not None:
 
-            if conv_no not in [149,151,152,153,155,157]:
-                report("New <ol> converter: %d"%conv_no)
- 
             party_line = opinion_as_ol.find("blockquote/i")
             if party_line is not None:
                 app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text or "")
