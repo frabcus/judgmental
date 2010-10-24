@@ -207,7 +207,7 @@ class BtoJ(Massager):
                 # find it in parentheses in a meta title tag
                 metatitle = page.find('head/meta[@name="Title"]')
                 if metatitle is not None:
-                    scan(metatitle)
+                    scan(metatitle.text)
 
                 # try finding it at the end of the title tag in a more desperate fashion
                 raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
@@ -262,6 +262,7 @@ class BtoJ(Massager):
         opinion_as_ol = page.find("body/ol")
         opinion_as_opinion = page.find("body/doc/opinion")
         opinion_as_tmpl_set = page.find("head/tmpl_set")
+        opinion_as_div = page.find('body/table/tr/td/center/div[@class="Section1"]')
         
         if opinion_as_ol is not None:
 
@@ -289,6 +290,12 @@ class BtoJ(Massager):
             parties = ""
             opinion_as_tmpl_set = self.massage(opinion_as_tmpl_set)
             substitute('//div[@class="opinion"]',opinion_as_tmpl_set)
+
+        elif opinion_as_div is not None:
+
+            parties = ""
+            opinion_as_div = self.massage(opinion_as_div)
+            substitute('//div[@class="opinion"]',opinion_as_div)
 
         else:
             # try the whole body, after any headmatter
