@@ -217,6 +217,12 @@ class BtoJ(Massager):
                     for raw_date in r.finditer(remove_nb_space(t.tail or "")):
                         attempt(raw_date.groups()[0])
 
+                # try finding it in the first paragraph of the opinion
+                # if this works there's some metadata there
+                for t in page.findall("//font"):
+                    for raw_date in r.finditer(remove_nb_space(t.text)):
+                        attempt(raw_date.groups()[0])
+
             except GotIt, g:
                 return g.value
                 
