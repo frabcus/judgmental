@@ -71,6 +71,7 @@ class CorrectTypos(Rule):
     def transform(self,element):
         typos = [("Decisons","Decisions"),
                  ("Novenber","November"),
+                 ("Feburary","February"),
                  (u"31\xA0September","30 September")
                  ]
         
@@ -250,7 +251,7 @@ class BtoJ(Massager):
                     return x.tail[8:].strip()
 
             # does the title have the from "citation (date)"
-            title_cite = re.compile("^(.*)\\(.*\\)$").match(title_text)
+            title_cite = re.compile("^(.*)\\([^(]*$").match(title_text)
             if title_cite is not None:
                 return title_cite.groups()[0].strip()
             
