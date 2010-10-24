@@ -180,6 +180,10 @@ class BtoJ(Massager):
 
         def find_date():
 
+            def scan(s):
+                for raw_date in r.finditer(remove_nb_space(s or "")):
+                    attempt(raw_date.groups()[0])
+
             def attempt(s):
                 try:
                     raise GotIt(dateparse(s))
@@ -197,14 +201,12 @@ class BtoJ(Massager):
 
             try:
                 # find it in parentheses in the title tag
-                for raw_date in r.finditer(remove_nb_space(title_text)):
-                    attempt(raw_date.groups()[0])
+                scan(title_text)
 
                 # find it in parentheses in a meta title tag
                 metatitle = page.find('head/meta[@name="Title"]')
                 if metatitle is not None:
-                    for raw_date in r.finditer(remove_nb_space(metatitle.attrib["content"])):
-                        attempt(raw_date.groups()[0])
+                    scan(metatitle)
 
                 # try finding it at the end of the title tag in a more desperate fashion
                 raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
@@ -213,16 +215,17 @@ class BtoJ(Massager):
 
                 # try finding it in subtags of the title tag
                 for t in title.iterdescendants():
-                    for raw_date in r.finditer(remove_nb_space(t.text or "")):
-                        attempt(raw_date.groups()[0])
-                    for raw_date in r.finditer(remove_nb_space(t.tail or "")):
-                        attempt(raw_date.groups()[0])
+                    scan(t.text)
+                    scan(t.tail)
 
                 # try finding it in the first paragraph of the opinion
                 # if this works there's some metadata there
                 for t in page.findall("//font"):
-                    for raw_date in r.finditer(remove_nb_space(t.text)):
-                        attempt(raw_date.groups()[0])
+                    scan(t.text)
+
+                # try finding it near a link:
+                for t in page.findall('//a[@title="Link to BAILII version"]'):
+                    scan(t.tail)
 
             except GotIt, g:
                 return g.value
