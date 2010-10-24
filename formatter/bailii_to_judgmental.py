@@ -37,6 +37,13 @@ class CantFindCitation(Exception):
 
 
 
+class GotIt(Exception):
+    "This is a labour-saving device"
+    def __init__(self,value):
+        self.value = value
+
+
+
 class EmptyParagraphsToBreaks(Rule):
     "<p /> --> <br />"
     "<blockquote /> --> <br />"
@@ -178,45 +185,40 @@ class BtoJ(Massager):
 
         def find_date():
 
+            def attempt(s):
+                try:
+                    raise GotIt(dateparse(s))
+                except (ValueError, TypeError):
+                    pass
+
             # parenthesised search object
             r = re.compile("\\(([^()]*)($|\\))")
 
-            # find it in parentheses in the title tag
-            for raw_date in r.finditer(remove_nb_space(title_text)):
-                try:
-                    return dateparse(raw_date.groups()[0])
-                except (ValueError, TypeError):
-                    pass
+            try:
+                # find it in parentheses in the title tag
+                for raw_date in r.finditer(remove_nb_space(title_text)):
+                    attempt(raw_date.groups()[0])
 
-            # find it in parentheses in a meta title tag
-            metatitle = page.find('head/meta[@name="Title"]')
-            if metatitle is not None:
-                for raw_date in r.finditer(remove_nb_space(metatitle.attrib["content"])):
-                    try:
-                        return dateparse(raw_date.groups()[0])
-                    except (ValueError, TypeError):
-                        pass
+                # find it in parentheses in a meta title tag
+                metatitle = page.find('head/meta[@name="Title"]')
+                if metatitle is not None:
+                    for raw_date in r.finditer(remove_nb_space(metatitle.attrib["content"])):
+                        attempt(raw_date.groups()[0])
 
-            # try finding it at the end of the title tag in a more desperate fashion
-            raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
-            if raw_date:
-                try:
-                    return dateparse(raw_date.groups()[0])
-                except (ValueError, TypeError):
-                    pass
+                # try finding it at the end of the title tag in a more desperate fashion
+                raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
+                if raw_date:
+                    attempt(raw_date.groups()[0])
 
-            # try finding it in subtags of the title tag
-            for t in title.iterdescendants():
-                for raw_date in r.finditer(remove_nb_space(t.text or "")):
-                    try:
-                        return dateparse(raw_date.groups()[0])
-                    except (ValueError, TypeError):
-                        pass
-                for raw_date in r.finditer(remove_nb_space(t.tail or "")):
-                    try:
-                        return dateparse(raw_date.groups()[0])
-                    except (ValueError, TypeError):
-                        pass
+                # try finding it in subtags of the title tag
+                for t in title.iterdescendants():
+                    for raw_date in r.finditer(remove_nb_space(t.text or "")):
+                        attempt(raw_date.groups()[0])
+                    for raw_date in r.finditer(remove_nb_space(t.tail or "")):
+                        attempt(raw_date.groups()[0])
+
+            except GotIt, g:
+                return g.value
                 
             raise CantFindDate()
 
