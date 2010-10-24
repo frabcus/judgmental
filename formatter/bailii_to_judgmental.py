@@ -3,10 +3,10 @@ Converts the Bailii archive into nicer more formulaic HTML.
 """
 
 # To do:
-#  - improve recognition and handling of metadata
+#  - improve recognition and handling of metadata, especially parties
 #  - recognise things that should be ordered lists
 #  - normalise character encodings
-#  - are there any other massive unclosed tag setups other than <li><a> ?
+#  - are there any other massive unclosed tag configurations other than <li><a> ?
 
 
 
@@ -260,6 +260,7 @@ class BtoJ(Massager):
 
         opinion_as_ol = page.find("body/ol")
         opinion_as_opinion = page.find("body/doc/opinion")
+        opinion_as_tmpl_set = page.find("head/tmpl_set")
         
         if opinion_as_ol is not None:
 
@@ -274,13 +275,19 @@ class BtoJ(Massager):
                 parties = ""
 
             opinion_as_ol = self.massage(opinion_as_ol)
-            substitute('//div[@class="opinion"]',extract('//ol'))
+            substitute('//div[@class="opinion"]',opinion_as_ol)
 
         elif opinion_as_opinion is not None:
 
             parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
             opinion_as_opinion = self.massage(opinion_as_opinion)
-            substitute('//div[@class="opinion"]',extract('//opinion'))
+            substitute('//div[@class="opinion"]',opinion_as_opinion)
+
+        elif opinion_as_tmpl_set is not None:
+
+            parties = ""
+            opinion_as_tmpl_set = self.massage(opinion_as_tmpl_set)
+            substitute('//div[@class="opinion"]',opinion_as_tmpl_set)
 
         else:
             # try the whole body, after any headmatter
