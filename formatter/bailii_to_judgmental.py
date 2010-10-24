@@ -62,7 +62,9 @@ class CorrectTypos(Rule):
     "Corrects some typographical errors found in the text"
 
     def transform(self,element):
-        typos = [("Decisons","Decisions")]
+        typos = [("Decisons","Decisions"),
+                 ("Novenber","November")
+                 ]
         
         done_something = False
         for (old,new) in typos:
@@ -181,9 +183,8 @@ class BtoJ(Massager):
 
             # find it in parentheses in the title tag
             for raw_date in r.finditer(remove_nb_space(title_text)):
-                s = raw_date.groups()[0]
                 try:
-                    return dateparse(s)
+                    return dateparse(raw_date.groups()[0])
                 except (ValueError, TypeError):
                     pass
 
@@ -191,21 +192,32 @@ class BtoJ(Massager):
             metatitle = page.find('head/meta[@name="Title"]')
             if metatitle is not None:
                 for raw_date in r.finditer(remove_nb_space(metatitle.attrib["content"])):
-                    s = raw_date.groups()[0]
                     try:
-                        return dateparse(s)
+                        return dateparse(raw_date.groups()[0])
                     except (ValueError, TypeError):
                         pass
 
             # try finding it at the end of the title tag in a more desperate fashion
             raw_date = re.compile("([0-9]* [A-Za-z]* [0-9]*)[^0-9]*$").search(title_text)
             if raw_date:
-                s = raw_date.groups()[0]
                 try:
-                    return dateparse(s)
+                    return dateparse(raw_date.groups()[0])
                 except (ValueError, TypeError):
                     pass
 
+            # try finding it in subtags of the title tag
+            for t in title.iterdescendants():
+                for raw_date in r.finditer(remove_nb_space(t.text or "")):
+                    try:
+                        return dateparse(raw_date.groups()[0])
+                    except (ValueError, TypeError):
+                        pass
+                for raw_date in r.finditer(remove_nb_space(t.tail or "")):
+                    try:
+                        return dateparse(raw_date.groups()[0])
+                    except (ValueError, TypeError):
+                        pass
+                
             raise CantFindDate()
 
         date = find_date()
