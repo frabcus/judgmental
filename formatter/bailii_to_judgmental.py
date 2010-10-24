@@ -14,7 +14,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 from lxml.etree import Element,XML
 import re
 
-# the debian package "python-dateutil" is useful
+# the debian package "python-dateutil" provides this
 from dateutil.parser import parse as dateparse
 
 from massager import *
@@ -72,6 +72,7 @@ class CorrectTypos(Rule):
         typos = [("Decisons","Decisions"),
                  ("Novenber","November"),
                  ("Feburary","February"),
+                 ("Jully","July"),
                  (u"31\xA0September","30 September")
                  ]
         
@@ -127,7 +128,7 @@ class MendUnclosedTags(Rule):
 class BtoJ(Massager):
 
     def preprocess(self,inf,outf):
-        "Discard everything up to the first '<'."
+        "Discard everything up to the first '<'"
         for l in inf:
             if "<" in l:
                 outf.write(l[l.index("<"):])
@@ -183,7 +184,7 @@ class BtoJ(Massager):
 
             def scan(s):
                 for raw_date in r.finditer(remove_nb_space(s or "")):
-                    attempt(raw_date.groups()[0])
+                    attempt(raw_date.groups()[0].strip())
 
             def attempt(s):
                 try:
@@ -227,6 +228,16 @@ class BtoJ(Massager):
                 # try finding it near a link:
                 for t in page.findall('//a[@title="Link to BAILII version"]'):
                     scan(t.tail)
+
+                # try in a bold tag (getting desperate now)
+                for t in page.findall('//b'):
+                    attempt(t.text or "")
+
+                # try finding a "notified: DATE"
+                for t in page.findall('//p'):
+                    raw_date = re.compile("notified: (.*)$").search(t.text or "")
+                    if raw_date:
+                        attempt(raw_date.groups()[0])
 
             except GotIt, g:
                 return g.value
