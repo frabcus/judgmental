@@ -70,7 +70,8 @@ class CorrectTypos(Rule):
 
     def transform(self,element):
         typos = [("Decisons","Decisions"),
-                 ("Novenber","November")
+                 ("Novenber","November"),
+                 (u"31\xA0September","30 September")
                  ]
         
         done_something = False
@@ -177,12 +178,6 @@ class BtoJ(Massager):
         court_name_h1 = extract('//td[@align="left"]/h1')
         court_name = court_name_h1.text
 
-        def remove_nb_space(s):
-            try:
-                return s.replace(u"\xA0"," ")
-            except UnicodeDecodeError:
-                return s
-
         def find_date():
 
             def attempt(s):
@@ -190,6 +185,12 @@ class BtoJ(Massager):
                     raise GotIt(dateparse(s))
                 except (ValueError, TypeError):
                     pass
+
+            def remove_nb_space(s):
+                try:
+                    return s.replace(u"\xA0"," ")
+                except UnicodeDecodeError:
+                    return s            
 
             # parenthesised search object
             r = re.compile("\\(([^()]*)($|\\))")
