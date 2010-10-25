@@ -23,6 +23,7 @@ from massager import *
 from judgment import *
 
 
+
 class CantFindElement(Exception):
     def __init__(self,searchstring):
         self.searchstring = searchstring
@@ -353,4 +354,4 @@ class BtoJ(Massager):
         t.find('//div[@id="subtitle-parties"]').text = parties
         t.find('//span[@id="bc-description"]').text = description
 
-        return Judgment(html=t, infile=os.path.basename(inlocation))
+        return Judgment(html=t, infilename=os.path.basename(inlocation))
