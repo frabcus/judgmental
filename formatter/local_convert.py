@@ -1,19 +1,3 @@
-### To do:
-
-
-# make code raise ConversionError
-# and (check error list against dudlist)
-
-# fill in the blanks in the code :-)
-
-# should a judgment object know its own output filename? maybe not the directory
-
-
-
-
-
-
-
 from sys import stdout
 import os
 
