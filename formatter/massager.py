@@ -42,17 +42,6 @@ class Massager():
         """
         pass
 
-    def read_and_restructure(self,inlocation,outlocation):
-        infile = open(inlocation,'r')
-        midfile = StringIO()
-        self.preprocess(infile,midfile)
-        midfile.seek(0)
-        page = html.parse(midfile)
-        page = self.restructure(page)
-        s = html.tostring(page, pretty_print = True)
-        outfile = open(outlocation,'w')
-        outfile.write(s)
-
     def preprocess(self,inf,outf):
         "Default preprocessor routine"
         for l in inf:

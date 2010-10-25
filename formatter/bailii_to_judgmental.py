@@ -14,12 +14,13 @@ Converts the Bailii archive into nicer more formulaic HTML.
 
 from lxml.etree import Element,XML
 import re
+import os
 
 # the debian package "python-dateutil" provides this
 from dateutil.parser import parse as dateparse
 
 from massager import *
-
+from judgment import *
 
 
 class CantFindElement(Exception):
@@ -130,12 +131,14 @@ class BtoJ(Massager):
 
     def preprocess(self,inf,outf):
         "Discard everything up to the first '<'"
+        def use(s):
+            outf.write(s.replace("\x85","").replace("\xE9","&eacute;").replace("\x92","'"))
         for l in inf:
             if "<" in l:
-                outf.write(l[l.index("<"):].replace("\x85","").replace("\x92","'"))
+                use(l[l.index("<"):])
                 break
         for l in inf:
-            outf.write(l.replace("\x85","").replace("\x92","'"))
+            use(l)
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
@@ -151,7 +154,20 @@ class BtoJ(Massager):
     def template_filename(self):
         return "template.html"
                         
-    def restructure(self,page):
+    def read_and_restructure(self,inlocation,outlocation):
+        j = self.make_judgment(inlocation)
+
+        outfile = open(outlocation,'w')
+        j.write_html(outfile)
+        outfile.close()
+        return j
+        
+    def make_judgment(self,inlocation):
+        infile = open(inlocation,'r')
+        midfile = StringIO()
+        self.preprocess(infile,midfile)
+        midfile.seek(0)
+        page = html.parse(midfile)
 
         t = self.template()
 
@@ -337,4 +353,4 @@ class BtoJ(Massager):
         t.find('//div[@id="subtitle-parties"]').text = parties
         t.find('//span[@id="bc-description"]').text = description
 
-        return t
+        return Judgment(html=t, infile=os.path.basename(inlocation))
