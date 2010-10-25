@@ -1,9 +1,3 @@
-# serious encoding problems (x85)
-_uk_cases_UKIAT_2007_00072.html
-
-# serious encoding problems (x92 as apostrophe)
-_uk_cases_SIAC_2003_1_2002.html
-
 # duplicate
 _uk_cases_UKSSCSC_2004_CSIB 33_2004.html
 
