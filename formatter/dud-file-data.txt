@@ -1,6 +1,3 @@
-# duplicate
-_uk_cases_UKSSCSC_2004_CSIB 33_2004.html
-
 # straightforwardly dud pages
 _uk_cases_UKEAT_2003_1332_02_2403.html
 _ew_cases_EWCA_Crim_2009_528.html
