@@ -63,33 +63,34 @@ def filehash(fn):
     f = open(fn,'r')
     for l in f:
         m.update(l)
-    return (fn,m.digest())
+    return m.digest()
 
 
 def convert(filenames,outdir):
     try:
         j = BtoJ().make_judgment(filenames[0])
         j.write_html_to_dir(outdir)
-        return (True,j,filenames)
+        return (True,j)
     except ConversionError, e:
-        return (False,e,filenames)
+        return (False,e)
 
 
 def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
 
     hashes = {}
 
-    def filehash_report(t):
-        (fn,d) = t
-        if d in hashes:
-            hashes[d].append(filename)
-        else:
-            hashes[d] = [filename]
+    def filehash_report(fn):
+        def closure(d):
+            if d in hashes:
+                hashes[d].append(filename)
+            else:
+                hashes[d] = [filename]
+        return closure
 
     print "Hashing files..."
     p = pool(use_multi)
     for filename in files:
-        p.apply_async(filehash,(filename,),callback=filehash_report)
+        p.apply_async(filehash,(filename,),callback=filehash_report(filename))
     p.close()
     p.join()
     print
@@ -97,24 +98,26 @@ def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
 
     finished_count = Counter()
         
-    def convert_report(r):
-        "Takes True and a judgment object, or False and an exception"
-        (s,e,filenames) = r
-        if s:
-            f = filenames[0]
-            finished_count.inc()
-            print "%6d. %s"%(finished_count.count, os.path.basename(f))
-            ### any code for e to upload its metadata should go here
-            for filename in filenames[1:]:
-                Duplicate(f).log(filename,logfile)
-        else:
-            for filename in filenames:
-                e.log(filename,logfile)
+    def convert_report(filenames):
+        def closure(r):
+            "Takes True and a judgment object, or False and an exception"
+            (s,e) = r
+            if s:
+                f = filenames[0]
+                finished_count.inc()
+                print "%6d. %s"%(finished_count.count, os.path.basename(f))
+                ### any code for e to upload its metadata should go here
+                for filename in filenames[1:]:
+                    Duplicate(f).log(filename,logfile)
+            else:
+                for filename in filenames:
+                    e.log(filename,logfile)
+        return closure
 
     print "Converting files..."
     p = pool(use_multi)
     for filenames in hashes.itervalues():
-        p.apply_async(convert,(filenames,outdir),callback=convert_report)
+        p.apply_async(convert,(filenames,outdir),callback=convert_report(filenames))
     p.close()
     p.join()
     print " ... done"
