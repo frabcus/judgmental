@@ -8,6 +8,7 @@ from local_convert import *
 file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 content_dir = os.path.join(file_dir, "../../bailii")
 output_dir = os.path.join(file_dir, "../../judgmental")
+logfile_name = os.path.join(file_dir, "../../errors.log")
 
 infiles = all_html_files(content_dir)
 
@@ -27,5 +28,6 @@ print "  ... there are %d dud filenames"%len(duds)
 
 infiles = [f for f in infiles if os.path.basename(f) not in duds]
 
-### could specify a log file too!
-convert_files(infiles, output_dir)
+logfile = open(logfile_name,'w')
+convert_files(infiles, output_dir, logfile=logfile)
+logfile.close()
