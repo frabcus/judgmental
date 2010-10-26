@@ -108,10 +108,10 @@ def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
                 print "%6d. %s"%(finished_count.count, os.path.basename(f))
                 ### any code for e to upload its metadata should go here
                 for filename in filenames[1:]:
-                    Duplicate(f).log(filename,logfile)
+                    Duplicate(os.path.basename(f)).log(os.path.basename(filename),logfile)
             else:
                 for filename in filenames:
-                    e.log(filename,logfile)
+                    e.log(os.path.basename(filename),logfile)
         return closure
 
     print "Converting files..."
