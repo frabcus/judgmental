@@ -12,7 +12,7 @@ class Judgment():
     def __init__(self,html,infilename):
         self.html = html
         self.infilename = infilename
-        self.outbasename = os.path.basename(infilename)
+        self.outbasename = os.path.basename(infilename).replace(" ","_")
 
     def write_html(self,f):
         f.write(html.tostring(self.html, pretty_print = True))
@@ -26,7 +26,7 @@ class Judgment():
 
 class ConversionError(Exception):
     def log(self,f,logfile):
-        logfile.write("%s: %s"%(f,self.message))
+        logfile.write("%s: %s\n"%(f,self.message))
 
 
 class StandardConversionError(ConversionError):

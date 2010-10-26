@@ -188,17 +188,24 @@ class BtoJ(Massager):
             print "     %s"%s
 
         try:
+            title = extract("//title")
+            title_text = (title.text or "").strip()
+        except CantFindElement:
+            raise StandardConversionError("skeleton page, with no title")
+        if title_text == "Cisco Systems Inc. Web Authentication Redirect":
+            raise StandardConversionError("redirection page")
+
+        court_name_h1 = extract('//td[@align="left"]/h1')
+        court_name = (court_name_h1.text or "").strip()
+        if court_name == "Not found":
+            raise StandardConversionError("empty 'Not Found' page")
+        
+        try:
             converter = extract('head/meta[@name="Converter"]').attrib["content"]
             conv_no = int("".join(c for c in converter if c.isdigit()) or "0")
         except CantFindElement:
             converter = "None supplied"
             conv_no = 0
-
-        title = extract("//title")
-        title_text = (title.text or "").strip()
-        
-        court_name_h1 = extract('//td[@align="left"]/h1')
-        court_name = court_name_h1.text
 
         def find_date():
 
