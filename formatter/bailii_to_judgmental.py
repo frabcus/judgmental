@@ -138,6 +138,8 @@ class BtoJ(Massager):
             if "<" in l:
                 use(l[l.index("<"):])
                 break
+        else:
+            raise StandardConversionError("no HTML present")
         for l in inf:
             use(l)
 
