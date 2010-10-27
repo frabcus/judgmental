@@ -1,6 +1,6 @@
 from sys import stdout
 import os
-
+import pickle
 
 # Look see if we can speed things up by using multiple cores
 global multi_enabled
@@ -66,17 +66,7 @@ def filehash(fn):
     return m.digest()
 
 
-def convert(filenames,outdir):
-    try:
-        j = BtoJ().make_judgment(filenames[0])
-        j.write_html_to_dir(outdir)
-        return (True,j)
-    except ConversionError, e:
-        return (False,e)
-
-
-def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
-
+def make_hashes(files,hashfile,use_multi=multi_enabled):
     hashes = {}
 
     def filehash_report(fn):
@@ -95,6 +85,46 @@ def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
     p.join()
     print
     print "  ... %d files, of which %d are distinct"%(len(files),len(hashes))
+
+    f = open(hashfile,'w')
+    pickle.dump(hashes,f)
+    f.close()
+
+    return hashes
+
+
+def read_hashes(hashfile):
+    f = open(hashfile,'r')
+    hashes = pickle.load(f)
+    f.close()
+    return hashes
+
+
+def convert(filenames,outdir):
+    try:
+        j = BtoJ().make_judgment(filenames[0])
+        j.write_html_to_dir(outdir)
+        return (True,j)
+    except ConversionError, e:
+        return (False,e)
+
+
+def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=stdout,use_multi_hash=multi_enabled,use_multi_convert=multi_enabled):
+
+    if not refresh_hashes:
+        hashes = read_hashes(hashfile)
+        files_set1 = set(files)
+        files_set2 = set()
+        for l in hashes.itervalues():
+            files_set2.update(l)
+        if files_set1 != files_set2:
+            print "File list has changed"
+            refresh_hashes = True
+        else:
+            print "Using stored file list"
+            
+    if refresh_hashes:
+        hashes = make_hashes(files,hashfile,use_multi=use_multi_hash)
 
     finished_count = Counter()
         
@@ -115,7 +145,7 @@ def convert_files(files,outdir,logfile=stdout,use_multi=multi_enabled):
         return closure
 
     print "Converting files..."
-    p = pool(use_multi)
+    p = pool(use_multi_convert)
     for filenames in hashes.itervalues():
         p.apply_async(convert,(filenames,outdir),callback=convert_report(filenames))
     p.close()
