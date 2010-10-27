@@ -10,7 +10,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 
 
 
-from lxml.etree import Element,XML
+from lxml.etree import Element
 import re
 import os
 
