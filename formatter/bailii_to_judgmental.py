@@ -150,7 +150,7 @@ class BtoJ(Massager):
         return l
 
     def template(self):
-        return html.parse(self.template_filename())
+        return etree.parse(self.template_filename())
         
     def template_filename(self):
         return "template.html"
@@ -360,4 +360,4 @@ class BtoJ(Massager):
         t.find('//div[@id="subtitle-parties"]').text = parties
         t.find('//span[@id="bc-description"]').text = description
 
-        return Judgment(html=t, infilename=os.path.basename(inlocation))
+        return Judgment(xhtml=t, infilename=os.path.basename(inlocation))

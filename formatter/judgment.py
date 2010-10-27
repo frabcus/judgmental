@@ -2,20 +2,20 @@
 An object representing a judgment and its metadata, and some standard errors in producing them.
 """
 
-from lxml import html
+from lxml import etree
 import os
 
 
 class Judgment():
     "Represents a single judgment"
 
-    def __init__(self,html,infilename):
-        self.html = html
+    def __init__(self,xhtml,infilename):
+        self.xhtml = xhtml
         self.infilename = infilename
         self.outbasename = os.path.basename(infilename).replace(" ","_")
 
     def write_html(self,f):
-        f.write(html.tostring(self.html, pretty_print = True))
+        f.write(etree.tostring(self.xhtml, pretty_print = True))
 
     def write_html_to_dir(self,dirname):
         o = open(os.path.join(dirname,self.outbasename), 'w')
