@@ -10,7 +10,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 
 
 
-from lxml.etree import Element
+from lxml import html, etree
 import re
 import os
 
@@ -53,11 +53,11 @@ class EmptyParagraphsToBreaks(Rule):
         done_something = False
         for e in element.findall("p"):
             if e.getchildren() == [] and (e.text or "").strip() == "":
-                element.replace(e, Element("br"))
+                element.replace(e, etree.Element("br"))
                 done_something = True
         for e in element.findall("blockquote"):
             if e.getchildren() == [] and (e.text or "").strip() == "":
-                element.replace(e, Element("br"))
+                element.replace(e, etree.Element("br"))
                 done_something = True
         if done_something:
             return element
@@ -335,7 +335,6 @@ class BtoJ(Massager):
 
         else:
             # try the whole body, after any headmatter
-
             body = page.find("body")
             while body.getchildren()[0].tag != "p":
                 body.getchildren()[0].drop_tree()
