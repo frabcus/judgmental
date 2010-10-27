@@ -6,9 +6,7 @@ Converts the Bailii archive into nicer more formulaic HTML.
 #  - improve recognition of metadata, especially parties and judges
 #  - stash metadata for indexer
 #  - recognise things that should be ordered lists
-#  - normalise character encodings
 #  - are there any other massive unclosed tag configurations other than <li><a> ?
-#  - make blacklist obsolete by recognising empties
 
 
 
