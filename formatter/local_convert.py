@@ -101,12 +101,13 @@ def read_hashes(hashfile):
 
 
 def convert(filenames,outdir):
+    "Returns True and a judgment, or False and a message"
     try:
         j = BtoJ().make_judgment(filenames[0])
         j.write_html_to_dir(outdir)
         return (True,j)
     except ConversionError, e:
-        return (False,e)
+        return (False,e.message)
 
 
 def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=stdout,use_multi_hash=multi_enabled,use_multi_convert=multi_enabled):
@@ -130,18 +131,18 @@ def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=s
         
     def convert_report(filenames):
         def closure(r):
-            "Takes True and a judgment object, or False and an exception"
-            (s,e) = r
+            "Takes True and a judgment object, or False and a message"
+            (s,x) = r
             if s:
                 f = filenames[0]
                 finished_count.inc()
                 print "%6d. %s"%(finished_count.count, os.path.basename(f))
-                ### any code for e to upload its metadata should go here
+                ### any code for x to upload its metadata should go here
                 for filename in filenames[1:]:
                     Duplicate(os.path.basename(f)).log(os.path.basename(filename),logfile)
             else:
                 for filename in filenames:
-                    e.log(os.path.basename(filename),logfile)
+                    StandardConversionError(x).log(os.path.basename(filename),logfile)
         return closure
 
     print "Converting files..."
