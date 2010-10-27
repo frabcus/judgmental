@@ -313,25 +313,25 @@ class BtoJ(Massager):
                 parties = ""
 
             opinion_as_ol = self.massage(opinion_as_ol)
-            substitute('//div[@class="opinion"]',opinion_as_ol)
+            substitute('//div[@class="opinion"]/p',opinion_as_ol)
 
         elif opinion_as_opinion is not None:
 
             parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
             opinion_as_opinion = self.massage(opinion_as_opinion)
-            substitute('//div[@class="opinion"]',opinion_as_opinion)
+            substitute('//div[@class="opinion"]/p',opinion_as_opinion)
 
         elif opinion_as_tmpl_set is not None:
 
             parties = ""
             opinion_as_tmpl_set = self.massage(opinion_as_tmpl_set)
-            substitute('//div[@class="opinion"]',opinion_as_tmpl_set)
+            substitute('//div[@class="opinion"]/p',opinion_as_tmpl_set)
 
         elif opinion_as_div is not None:
 
             parties = ""
             opinion_as_div = self.massage(opinion_as_div)
-            substitute('//div[@class="opinion"]',opinion_as_div)
+            substitute('//div[@class="opinion"]/p',opinion_as_div)
 
         else:
             # try the whole body, after any headmatter
@@ -341,7 +341,7 @@ class BtoJ(Massager):
             parties = ""
             opinion = body.getchildren()[0]
             opinion = self.massage(opinion)
-            substitute('//div[@class="opinion"]',opinion)
+            substitute('//div[@class="opinion"]/p',opinion)
         
         # short name of case
         if parties!="":
