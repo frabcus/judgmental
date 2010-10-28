@@ -295,54 +295,46 @@ class BtoJ(Massager):
 
         citation = find_citation()
 
-        opinion_as_ol = page.find("body/ol")
-        opinion_as_opinion = page.find("body/doc/opinion")
-        opinion_as_tmpl_set = page.find("head/tmpl_set")
-        opinion_as_div = page.find('body/table/tr/td/center/div[@class="Section1"]')
-        
-        if opinion_as_ol is not None:
+        def find_opinion_and_parties():
+     
+            opinion_as_ol = page.find("body/ol")
+            if opinion_as_ol is not None:
 
-            party_line = opinion_as_ol.find("blockquote/i")
-            if party_line is not None:
-                app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text or "")
-                if app_resp is not None:
-                    parties = " v. ".join(x.strip() for x in app_res.groups())
+                party_line = opinion_as_ol.find("blockquote/i")
+                if party_line is not None:
+                    app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text or "")
+                    if app_resp is not None:
+                        parties = " v. ".join(x.strip() for x in app_res.groups())
+                    else:
+                        parties = ""
                 else:
                     parties = ""
-            else:
-                parties = ""
+                return (parties,opinion_as_ol)
 
-            opinion_as_ol = self.massage(opinion_as_ol)
-            substitute('//div[@class="opinion"]/p',opinion_as_ol)
+            opinion_as_opinion = page.find("body/doc/opinion")
+            if opinion_as_opinion is not None:
 
-        elif opinion_as_opinion is not None:
+                parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
+                return (parties,opinion_as_opinion)
 
-            parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
-            opinion_as_opinion = self.massage(opinion_as_opinion)
-            substitute('//div[@class="opinion"]/p',opinion_as_opinion)
+            opinion_as_tmpl_set = page.find("head/tmpl_set")
+            if opinion_as_tmpl_set is not None:
+                return ("",opinion_as_tmpl_set)
 
-        elif opinion_as_tmpl_set is not None:
-
-            parties = ""
-            opinion_as_tmpl_set = self.massage(opinion_as_tmpl_set)
-            substitute('//div[@class="opinion"]/p',opinion_as_tmpl_set)
-
-        elif opinion_as_div is not None:
-
-            parties = ""
-            opinion_as_div = self.massage(opinion_as_div)
-            substitute('//div[@class="opinion"]/p',opinion_as_div)
-
-        else:
+            opinion_as_div = page.find('body/table/tr/td/center/div[@class="Section1"]')
+            if opinion_as_div is not None:
+                return ("",opinion_as_div)
+            
             # try the whole body, after any headmatter
             body = page.find("body")
             while body.getchildren()[0].tag != "p":
                 body.getchildren()[0].drop_tree()
-            parties = ""
-            opinion = body.getchildren()[0]
-            opinion = self.massage(opinion)
-            substitute('//div[@class="opinion"]/p',opinion)
-        
+            return ("",body.getchildren()[0])
+
+        (parties,opinion) = find_opinion_and_parties()
+        opinion = self.massage(opinion)
+        substitute('//div[@class="opinion"]/p',opinion)
+
         # short name of case
         if parties!="":
             description = "%s [%s]"%(parties,date.year)
