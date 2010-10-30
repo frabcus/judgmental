@@ -50,7 +50,7 @@ def all_html_files(root):
     return l
 
 
-class Counter():
+class Counter:
     def __init__(self):
         self.count = 0
     def inc(self):
