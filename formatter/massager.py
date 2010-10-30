@@ -3,7 +3,7 @@ from cStringIO import StringIO
 
 
 
-class Rule():
+class Rule:
     "A recursive tree manipulation"
 
     def transform(self,element):
@@ -33,7 +33,7 @@ class SubmassageRule(Rule):
 
 
 
-class Massager():
+class Massager:
 
     def rules():
         """
