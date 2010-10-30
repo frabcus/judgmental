@@ -7,7 +7,7 @@ from local_convert import *
 
 file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 content_dir = os.path.join(file_dir, "../../bailii")
-output_dir = os.path.join(file_dir, "../../judgmental")
+output_dir = os.path.join(file_dir, "../../public_html")
 logfile_name = os.path.join(file_dir, "../../errors.log")
 hashfile = os.path.join(file_dir, "../../hashes.data")
 
