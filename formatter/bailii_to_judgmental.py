@@ -151,8 +151,9 @@ class BtoJ(Massager):
         try:
             text.decode(e)
         except UnicodeDecodeError: # file not encoded with e, so try to fix it
-            encoded_text = text.decode(chardet.detect(text)['encoding']).encode('ascii' if e=='UTF-8' else e, 'xmlcharrefreplace')
-            page = html.parse(StringIO(reencoded_text))
+            decoded = text.decode(chardet.detect(text)['encoding'])
+            reencoded = decoded.encode('ascii', 'xmlcharrefreplace')
+            page = html.parse(StringIO(reencoded))
         return page
 
     def rules(self):
