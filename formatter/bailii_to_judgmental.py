@@ -1,9 +1,10 @@
 """
-Converts the Bailii archive into nicer more formulaic HTML.
+Converts a document from the Bailii archive into nicer more formulaic HTML.
 """
 
 # To do:
 #  - improve recognition of metadata, especially parties and judges
+#  - recognise paragraphs (possibly separately for each opinion shape)
 #  - stash metadata for indexer
 #  - recognise things that should be ordered lists
 #  - are there any other massive unclosed tag configurations other than <li><a> ?
