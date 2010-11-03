@@ -19,9 +19,9 @@ except ImportError:
 
 # Get a hash algorithm
 try:
-    import hashlib.md5
+    from hashlib import md5
 except ImportError:
-    import md5
+    from md5 import md5
 
 from judgment import *
 from fakepool import Pool as FakePool
@@ -50,7 +50,7 @@ def all_html_files(root):
     return l
 
 
-class Counter():
+class Counter:
     def __init__(self):
         self.count = 0
     def inc(self):
@@ -59,7 +59,7 @@ class Counter():
 
 def filehash(fn):
     "takes a filename and returns a hash of the file"
-    m = md5.new()
+    m = md5()
     f = open(fn,'r')
     for l in f:
         m.update(l)
@@ -72,9 +72,9 @@ def make_hashes(files,hashfile,use_multi=multi_enabled):
     def filehash_report(fn):
         def closure(d):
             if d in hashes:
-                hashes[d].append(filename)
+                hashes[d].append(fn)
             else:
-                hashes[d] = [filename]
+                hashes[d] = [fn]
         return closure
 
     print "Hashing files..."

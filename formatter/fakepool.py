@@ -1,4 +1,4 @@
-class Pool():
+class Pool:
     def close(self):
         pass
     def join(self):

@@ -15,6 +15,8 @@ from lxml import html, etree
 import re
 import os
 
+import chardet
+
 # the debian package "python-dateutil" provides this
 from dateutil.parser import parse as dateparse
 
@@ -130,9 +132,9 @@ class MendUnclosedTags(Rule):
 class BtoJ(Massager):
 
     def preprocess(self,inf,outf):
-        "Discard everything up to the first '<'"
+        "Discard everything up to the first '<' and do CRLF -> LF"
         def use(s):
-            outf.write(s.replace("\x85","").replace("\xE9","&eacute;").replace("\x92","'"))
+            outf.write(s.replace('\r\n','\n'))
         for l in inf:
             if "<" in l:
                 use(l[l.index("<"):])
@@ -141,6 +143,19 @@ class BtoJ(Massager):
             raise StandardConversionError("no HTML present")
         for l in inf:
             use(l)
+
+    def parse(self,inf):
+        """Parses a page, checking for badly encoded pages"""
+        text = inf.read()
+        page = html.parse(StringIO(text))
+        e = page.docinfo.encoding
+        try:
+            text.decode(e)
+        except UnicodeDecodeError: # file not encoded with e, so try to fix it
+            decoded = text.decode(chardet.detect(text)['encoding'])
+            reencoded = decoded.encode('ascii', 'xmlcharrefreplace')
+            page = html.parse(StringIO(reencoded))
+        return page
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
@@ -169,7 +184,7 @@ class BtoJ(Massager):
         midfile = StringIO()
         self.preprocess(infile,midfile)
         midfile.seek(0)
-        page = html.parse(midfile)
+        page = self.parse(midfile)
 
         t = self.template()
 

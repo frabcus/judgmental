@@ -6,7 +6,7 @@ from lxml import etree
 import os
 
 
-class Judgment():
+class Judgment:
     "Represents a single judgment"
 
     def __init__(self,xhtml,infilename):
