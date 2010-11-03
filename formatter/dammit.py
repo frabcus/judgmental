@@ -1,3 +1,8 @@
+# MODIFIED version of UnicodeDammit class from Beautiful Soup
+# We prevent chardet from being used and decode iso-8859-1 as windows-1252
+# This seems to then give the best strategy for dealing with encoding in 
+# the bailii pages
+
 """Beautiful Soup bonus library: Unicode, Dammit
 
 This class forces XML data into a standard format (usually to UTF-8 or
@@ -10,14 +15,8 @@ import codecs
 import re
 import types
 
-# Autodetects character encodings.
-# Download from http://chardet.feedparser.org/
-try:
-    import chardet
-#    import chardet.constants
-#    chardet.constants._debug = 1
-except ImportError:
-    chardet = None
+# Don't use chardet
+chardet = None
 
 # cjkcodecs and iconv_codec make Python know about more character encodings.
 # Both are available from http://cjkpython.i18n.org/
@@ -98,6 +97,8 @@ class UnicodeDammit:
         if not proposed or proposed in self.triedEncodings:
             return None
         self.triedEncodings.append(proposed)
+        if proposed.lower() == "iso-8859-1":
+            proposed = "windows-1252"
         markup = self.markup
 
         # Convert smart quotes to HTML if coming from an encoding
