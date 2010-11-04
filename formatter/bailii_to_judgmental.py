@@ -368,4 +368,6 @@ class BtoJ(Massager):
         t.find('//div[@id="subtitle-parties"]').text = parties
         t.find('//span[@id="bc-description"]').text = description
 
-        return Judgment(xhtml=t, infilename=os.path.basename(inlocation))
+        return Judgment(xhtml=t,
+                        infilename=os.path.basename(inlocation),
+                        bailii_url=bailii_url)

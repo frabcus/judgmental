@@ -9,9 +9,10 @@ import os
 class Judgment:
     "Represents a single judgment"
 
-    def __init__(self,xhtml,infilename):
+    def __init__(self,xhtml,infilename,bailii_url):
         self.xhtml = xhtml
         self.infilename = infilename
+        self.bailii_url = bailii_url
         self.outbasename = os.path.basename(infilename).replace(" ","_")
 
     def write_html(self,f):
