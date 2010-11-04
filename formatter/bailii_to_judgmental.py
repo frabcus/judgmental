@@ -297,52 +297,23 @@ class BtoJ(Massager):
 
         citation = find_citation()
 
-        def find_opinion_and_parties():
-     
-            opinion_as_ol = page.find("body/ol")
-            if opinion_as_ol is not None:
-
-                party_line = opinion_as_ol.find("blockquote/i")
-                if party_line is not None:
-                    app_resp = re.compile("Appellant:(.*)Respondent:(.*)").match(party_line.text or "")
-                    if app_resp is not None:
-                        parties = " v. ".join(x.strip() for x in app_res.groups())
-                    else:
-                        parties = ""
-                else:
-                    parties = ""
-                return (parties,opinion_as_ol)
-
-            opinion_as_opinion = page.find("body/doc/opinion")
-            if opinion_as_opinion is not None:
-
-                parties = " ".join(self.massage(x).text for x in page.findall('//td[@align="center"]'))
-                return (parties,opinion_as_opinion)
-
-            opinion_as_tmpl_set = page.find("head/tmpl_set")
-            if opinion_as_tmpl_set is not None:
-                return ("",opinion_as_tmpl_set)
-
-            opinion_as_div = page.find('body/table/tr/td/center/div[@class="Section1"]')
-            if opinion_as_div is not None:
-                return ("",opinion_as_div)
-            
-            # try the whole body, after any headmatter
+        def find_opinion():
             body = page.find("body")
-            while body.getchildren()[0].tag != "p":
-                body.getchildren()[0].drop_tree()
-            return ("",body.getchildren()[0])
+            hrc = len(body.findall("hr"))
+            c = 0
+            for x in body.getchildren():
+                if x.tag == "hr":
+                    if not (0 < c < hrc - 1):
+                        x.drop_tree()
+                    c += 1
+                else:
+                    if not (0 < c < hrc):
+                        x.drop_tree()
+            return body
 
-        (parties,opinion) = find_opinion_and_parties()
+        opinion = find_opinion()
         opinion = self.massage(opinion)
         substitute('//div[@class="opinion"]/p',opinion)
-
-        # short name of case
-        if parties!="":
-            description = "%s [%s]"%(parties,date.year)
-        else:
-            # can we do better?
-            description = citation
 
         substitute("//title",title)
 
@@ -351,7 +322,6 @@ class BtoJ(Massager):
         t.find('//a[@id="bc-courtname"]').text = court_name
         t.find('//span[@id="meta-citation"]').text = citation
         t.find('//div[@id="meta-date"]').text = date_str
-        t.find('//div[@id="subtitle-parties"]').text = parties
-        t.find('//span[@id="bc-description"]').text = description
+        t.find('//span[@id="bc-description"]').text = title_text
 
         return Judgment(xhtml=t, infilename=os.path.basename(inlocation))
