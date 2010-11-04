@@ -15,7 +15,8 @@ from lxml import html, etree
 import re
 import os
 
-import chardet
+# a slightly modified version of UnicodeDammit from BeautifulSoup
+from dammit import UnicodeDammit
 
 # the debian package "python-dateutil" provides this
 from dateutil.parser import parse as dateparse
@@ -131,31 +132,18 @@ class MendUnclosedTags(Rule):
 
 class BtoJ(Massager):
 
-    def preprocess(self,inf,outf):
-        "Discard everything up to the first '<' and do CRLF -> LF"
-        def use(s):
-            outf.write(s.replace('\r\n','\n'))
-        for l in inf:
-            if "<" in l:
-                use(l[l.index("<"):])
-                break
-        else:
+    def preprocess(self,inf):
+        "Sort out encoding problems, discard everything up to the first '<' (eg. the BOM) and do CRLF -> LF"
+        data = inf.read()
+        u = UnicodeDammit(data, smartQuotesTo=None, isHTML=True).unicode
+        if u is None:
+            raise StandardConversionError('badly encoded file - invalid bytes need to be patched first')
+        a = u.encode('ascii', 'xmlcharrefreplace')
+        start = a.find('<')
+        if start == -1:
             raise StandardConversionError("no HTML present")
-        for l in inf:
-            use(l)
-
-    def parse(self,inf):
-        """Parses a page, checking for badly encoded pages"""
-        text = inf.read()
-        page = html.parse(StringIO(text))
-        e = page.docinfo.encoding
-        try:
-            text.decode(e)
-        except UnicodeDecodeError: # file not encoded with e, so try to fix it
-            decoded = text.decode(chardet.detect(text)['encoding'])
-            reencoded = decoded.encode('ascii', 'xmlcharrefreplace')
-            page = html.parse(StringIO(reencoded))
-        return page
+        page = a[start:].replace('\r\n','\n')
+        return StringIO(page)
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
@@ -181,10 +169,8 @@ class BtoJ(Massager):
         
     def make_judgment(self,inlocation):
         infile = open(inlocation,'r')
-        midfile = StringIO()
-        self.preprocess(infile,midfile)
-        midfile.seek(0)
-        page = self.parse(midfile)
+        midfile = self.preprocess(infile)
+        page = html.parse(midfile)
 
         t = self.template()
 
