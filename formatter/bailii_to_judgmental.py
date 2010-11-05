@@ -353,4 +353,8 @@ class BtoJ(Massager):
 
         return Judgment(xhtml=t,
                         infilename=os.path.basename(inlocation),
+                        title=title_text,
+                        date=date,
+                        citations=citation,
+                        courtname=court_name,
                         bailii_url=bailii_url)
