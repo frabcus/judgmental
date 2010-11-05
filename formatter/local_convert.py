@@ -2,6 +2,12 @@ from sys import stdout
 import os
 import pickle
 
+try:
+    import sqlite3 as sqlite
+except:
+    from pysqlite2 import dbapi2 as sqlite
+
+
 # Look see if we can speed things up by using multiple cores
 global multi_enabled
 try:
@@ -110,7 +116,7 @@ def convert(filenames,outdir):
         return (False,e.message)
 
 
-def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=stdout,use_multi_hash=multi_enabled,use_multi_convert=multi_enabled):
+def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=stdout,dbfile=':memory:',use_multi_hash=multi_enabled,use_multi_convert=multi_enabled):
 
     if not refresh_hashes:
         hashes = read_hashes(hashfile)
@@ -137,7 +143,11 @@ def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=s
                 f = filenames[0]
                 finished_count.inc()
                 print "%6d. %s"%(finished_count.count, os.path.basename(f))
-                ### any code for x to upload its metadata should go here
+                try:
+                    x.write_to_sql(cursor)
+                except sqlite.IntegrityError, e:
+                    StandardConversionError("sqlite.IntegrityError: %s"%str(e)).log(os.path.basename(f),logfile) # should be handled better?
+                #conn.commit()
                 for filename in filenames[1:]:
                     Duplicate(os.path.basename(f)).log(os.path.basename(filename),logfile)
             else:
@@ -145,12 +155,22 @@ def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=s
                     StandardConversionError(x).log(os.path.basename(filename),logfile)
         return closure
 
+    print "Initialising SQLite database..."
+    conn = sqlite.connect(dbfile)
+    cursor = conn.cursor()
+    try:
+        create_tables(cursor)
+    except sqlite.OperationalError: # should be handled better?
+        print "Database file already exists. Remove it first if you are sure..."
+        quit()
     print "Converting files..."
     p = pool(use_multi_convert)
     for filenames in hashes.itervalues():
         p.apply_async(convert,(filenames,outdir),callback=convert_report(filenames))
     p.close()
     p.join()
+    conn.commit()
+    conn.close()
     print " ... done"
 
 
