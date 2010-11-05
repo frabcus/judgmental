@@ -70,32 +70,6 @@ class EmptyParagraphsToBreaks(Rule):
 
 
 
-class SymbolClean(Rule):
-    "Makes special symbols more consistent, for example by replacing curved quotes with plain ones"
-
-    def transform(self, element):
-        symbolmap = [(u"\x97", u"\u2014"), # bad em-dash to good em-dash
-                     (u"\xa0", " "), # nb space to normal space
-                     (u"\u2019", "'"), # curved apostrophe to normal apostrophe
-                     (u"\u201c", '"'), # left curved quotes to normal quotes
-                     (u"\u201d", '"') # right curved quotes to normal quotes
-                     ]
-        
-        done_something = False
-        for (old, new) in symbolmap:
-            if old in (element.text or ""):
-                element.text = element.text.replace(old, new)
-                done_something = True
-            if old in (element.tail or ""):
-                element.tail = element.tail.replace(old, new)
-                done_something = True
-        if done_something:
-            return element
-        else:
-            return None
-
-
-
 class CorrectTypos(Rule):
     "Corrects some typographical errors found in the text"
 
@@ -172,8 +146,7 @@ class BtoJ(Massager):
         return StringIO(page)
 
     def rules(self):
-        l = [SymbolClean(),
-             EmptyParagraphsToBreaks(),
+        l = [EmptyParagraphsToBreaks(),
              CorrectTypos(),
              UndoNestedTitles(),
              MendUnclosedTags()]
