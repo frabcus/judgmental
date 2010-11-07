@@ -298,7 +298,7 @@ class BtoJ(Massager):
         citation = find_citation()
 
         def find_opinion():
-            body = page.find("body")
+            body = extract("body")
             hrc = len(body.findall("hr"))
             c = 0
             for x in body.getchildren():
@@ -312,7 +312,6 @@ class BtoJ(Massager):
             return body
 
         opinion = find_opinion()
-        opinion = self.massage(opinion)
         substitute('//div[@class="opinion"]/p',opinion)
 
         substitute("//title",title)
