@@ -34,12 +34,16 @@ class CantFindElement(Exception):
         return "Can't find '%s' in %s"%(self.searchstring,self.filename)
 
 class CantFindDate(Exception):
+    def __init__(self,filename):
+        self.filename = filename
     def __str__(self):
-        return "Can't find a date (probably because I'm unattractive)"
+        return "Can't find a date in %s"%self.filename
 
 class CantFindCitation(Exception):
-    def __str__(self):
-        return "Can't find a citation. Sucks to be us."
+    def __init__(self,filename):
+        self.filename = filename
+    def __str__(self,fil):
+        return "Can't find a citation in %s"%self.filename
 
 
 
@@ -76,9 +80,6 @@ class CorrectTypos(Rule):
 
     def transform(self,element):
         typos = [("Decisons","Decisions"),
-                 ("Novenber","November"),
-                 ("Feburary","February"),
-                 ("Jully","July"),
                  (u"31\xA0September","30 September")
                  ]
         
@@ -270,7 +271,7 @@ class BtoJ(Massager):
             except GotIt, g:
                 return g.value
                 
-            raise CantFindDate()
+            raise CantFindDate(inlocation)
 
         date = find_date()
 
@@ -294,12 +295,15 @@ class BtoJ(Massager):
             if title_cite is not None:
                 return title_cite.groups()[0].strip()
             
-            raise CantFindCitation()
+            raise CantFindCitation(inlocation)
 
         citation = find_citation()
 
         def find_opinion():
-            body = extract("body")
+            try:
+                body = extract("body")
+            except CantFindElement:
+                raise StandardConversionError("no body tag")
             hrc = len(body.findall("hr"))
             c = 0
             for x in body.getchildren():
