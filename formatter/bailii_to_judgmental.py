@@ -27,10 +27,11 @@ from judgment import *
 
 
 class CantFindElement(Exception):
-    def __init__(self,searchstring):
+    def __init__(self,searchstring,filename):
         self.searchstring = searchstring
+        self.filename = filename
     def __str__(self):
-        return "Can't find '%s'"%self.searchstring
+        return "Can't find '%s' in %s"%(self.searchstring,self.filename)
 
 class CantFindDate(Exception):
     def __str__(self):
@@ -177,7 +178,7 @@ class BtoJ(Massager):
         def extract(a):
             x = page.find(a)
             if x is None:
-                raise CantFindElement(a)
+                raise CantFindElement(a,inlocation)
             return self.massage(x)
 
         def substitute(a,y):
