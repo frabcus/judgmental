@@ -92,7 +92,10 @@ def convert_files(files,outdir,logfile=stdout,dbfile=':memory:',use_multi_conver
 
     if make_sql:
         print "Initialising SQLite database..."
-        conn = sqlite.connect(dbfile)
+        if multi_enabled and use_multi_convert:
+            conn = sqlite.connect(dbfile, check_same_thread = False)
+        else:
+            conn = sqlite.connect(dbfile)
         cursor = conn.cursor()
         try:
             create_tables(cursor)
