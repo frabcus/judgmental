@@ -75,29 +75,6 @@ class EmptyParagraphsToBreaks(Rule):
 
 
 
-class CorrectTypos(Rule):
-    "Corrects some typographical errors found in the text"
-
-    def transform(self,element):
-        typos = [("Decisons","Decisions"),
-                 (u"31\xA0September","30 September")
-                 ]
-        
-        done_something = False
-        for (old,new) in typos:
-            if old in (element.text or ""):
-                element.text = element.text.replace(old,new)
-                done_something = True
-            if old in (element.tail or ""):
-                element.tail = element.tail.replace(old,new)
-                done_something = True
-        if done_something:
-            return element
-        else:
-            return None
-
-
-
 class UndoNestedTitles(Rule):
     "At least one page has nested <title> tags. This deals with that."
 
@@ -149,7 +126,6 @@ class BtoJ(Massager):
 
     def rules(self):
         l = [EmptyParagraphsToBreaks(),
-             CorrectTypos(),
              UndoNestedTitles(),
              MendUnclosedTags()]
         
@@ -188,6 +164,14 @@ class BtoJ(Massager):
 
         def report(s):
             print "     %s"%s
+
+        # mend a systematic typo
+        h1 = page.find('/html/body/table/tr[2]/td/h1')
+        if h1 is not None and h1.text is not None:
+            h1.text = h1.text.replace("Decisons","Decisions")            
+        a = page.find('/html/body/table/tr[3]/td/small/a[3]')
+        if a is not None and a.text is not None:
+            a.text = a.text.replace("Decisons","Decisions")
 
         try:
             title = extract("//title")
