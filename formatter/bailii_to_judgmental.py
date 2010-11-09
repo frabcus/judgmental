@@ -26,24 +26,17 @@ from judgment import *
 
 
 
-class CantFindElement(Exception):
-    def __init__(self,searchstring,filename):
-        self.searchstring = searchstring
-        self.filename = filename
-    def __str__(self):
-        return "Can't find '%s' in %s"%(self.searchstring,self.filename)
+class CantFindElement(ConversionError):
+    def __init__(self,searchstring):
+        self.message = "can't find element \"%s\""%searchstring
 
-class CantFindDate(Exception):
-    def __init__(self,filename):
-        self.filename = filename
-    def __str__(self):
-        return "Can't find a date in %s"%self.filename
+class CantFindDate(ConversionError):
+    def __init__(self):
+        self.message = "can't find a date"
 
-class CantFindCitation(Exception):
-    def __init__(self,filename):
-        self.filename = filename
-    def __str__(self,fil):
-        return "Can't find a citation in %s"%self.filename
+class CantFindCitation(ConversionError):
+    def __init__(self):
+        self.message = "can't find the citations"
 
 
 
@@ -155,7 +148,7 @@ class BtoJ(Massager):
         def extract(a):
             x = page.find(a)
             if x is None:
-                raise CantFindElement(a,inlocation)
+                raise CantFindElement(a)
             return self.massage(x)
 
         def substitute(a,y):
@@ -255,7 +248,7 @@ class BtoJ(Massager):
             except GotIt, g:
                 return g.value
                 
-            raise CantFindDate(inlocation)
+            raise CantFindDate()
 
         date = find_date()
 
@@ -279,7 +272,7 @@ class BtoJ(Massager):
             if title_cite is not None:
                 return title_cite.groups()[0].strip()
             
-            raise CantFindCitation(inlocation)
+            raise CantFindCitation()
 
         citation = find_citation()
 
