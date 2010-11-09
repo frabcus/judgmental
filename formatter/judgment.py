@@ -64,8 +64,3 @@ class ConversionError(Exception):
 class StandardConversionError(ConversionError):
     def __init__(self,message):
         self.message = message
-
-
-class Duplicate(ConversionError):
-    def __init__(self,old):
-        self.message = "duplicate of %s"%old

@@ -19,20 +19,21 @@ file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 content_dir = os.path.join(file_dir, "../../bailii")
 output_dir = os.path.join(file_dir, "../../public_html")
 logfile_name = os.path.join(file_dir, "../../errors.log")
-hashfile = os.path.join(file_dir, "../../hashes.data")
 dbfile = os.path.join(file_dir, "../../judgmental.db")
 
 infiles = all_html_files(content_dir)
 
 make_sql = True
-use_multiprocessing = True
+use_multi_convert = True
 
 for a in sys.argv[1:]:
     if a == "--no-sql":
+        print "Option --no-sql selected"
         make_sql = False
     if a == "--slow":
+        print "Option --slow selected"
         use_multi_convert = False
 
 logfile = open(logfile_name,'w')
-convert_files(infiles, output_dir, hashfile=hashfile, make_sql=make_sql, logfile=logfile, dbfile=dbfile, use_multi_convert=use_multi_convert)
+convert_files(infiles, output_dir, make_sql=make_sql, logfile=logfile, dbfile=dbfile, use_multi_convert=use_multi_convert)
 logfile.close()
