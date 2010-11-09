@@ -84,7 +84,7 @@ def convert_files(files,outdir,logfile=stdout,dbfile=':memory:',use_multi_conver
                     try:
                         x.write_to_sql(cursor)
                     except sqlite.IntegrityError, e:
-                        StandardConversionError("sqlite.IntegrityError: %s"%str(e)).log(os.path.basename(f),logfile) # should be handled better?
+                        StandardConversionError("sqlite.IntegrityError: %s"%str(e)).log(os.path.basename(filename),logfile) # should be handled better?
                 #conn.commit()
             else:
                 StandardConversionError(x).log(os.path.basename(filename),logfile)
