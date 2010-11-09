@@ -156,7 +156,10 @@ def convert_files(files,outdir,hashfile=os.devnull,refresh_hashes=True,logfile=s
         return closure
 
     print "Initialising SQLite database..."
-    conn = sqlite.connect(dbfile)
+    if multi_enabled and use_multi_convert:
+        conn = sqlite.connect(dbfile, check_same_thread = False)
+    else:
+        conn = sqlite.connect(dbfile)
     cursor = conn.cursor()
     try:
         create_tables(cursor)
