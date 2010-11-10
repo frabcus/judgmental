@@ -159,11 +159,11 @@ class BtoJ(Massager):
             print "     %s"%s
 
         # mend a systematic typo
-        h1 = page.find('/html/body/table/tr[2]/td/h1')
-        if h1 is not None and h1.text is not None:
+        for h1 in page.findall('//h1')
+        if h1.text is not None:
             h1.text = h1.text.replace("Decisons","Decisions")            
-        a = page.find('/html/body/table/tr[3]/td/small/a[3]')
-        if a is not None and a.text is not None:
+        a = page.find('//a')
+        if a.text is not None:
             a.text = a.text.replace("Decisons","Decisions")
 
         try:
