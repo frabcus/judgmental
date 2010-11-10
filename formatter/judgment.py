@@ -41,8 +41,13 @@ class Judgment:
         
     def write_to_sql(self, cursor):
         "Outputs judgment metadata to SQL database"
-        cursor.execute('INSERT OR IGNORE INTO courts(name) VALUES (?)', (self.courtname,))
-        self.courtid = cursor.lastrowid
+        cursor.execute('SELECT courtid FROM courts WHERE name = ?', (self.courtname,))
+        result = cursor.fetchone()
+        if result:
+            self.courtid = result[0]
+        else:
+            cursor.execute('INSERT INTO courts(name) VALUES (?)', (self.courtname,))
+            self.courtid = cursor.lastrowid
         cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url) VALUES (?, ?, ?, ?, ?)', (self.title, self.date, self.courtid, self.outbasename, self.bailii_url))
         self.judgmentid = cursor.lastrowid
         for i in self.citations:
