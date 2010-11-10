@@ -159,12 +159,12 @@ class BtoJ(Massager):
             print "     %s"%s
 
         # mend a systematic typo
-        for h1 in page.findall('//h1')
-        if h1.text is not None:
-            h1.text = h1.text.replace("Decisons","Decisions")            
-        a = page.find('//a')
-        if a.text is not None:
-            a.text = a.text.replace("Decisons","Decisions")
+        for h1 in page.findall('//h1'):
+            if h1.text is not None:
+                h1.text = h1.text.replace("Decisons","Decisions")            
+        for a in page.findall('//a'):
+            if a.text is not None:
+                a.text = a.text.replace("Decisons","Decisions")
 
         try:
             title = extract("//title")
