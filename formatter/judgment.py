@@ -24,7 +24,8 @@ class Judgment:
             date = dateparse(date)
         self.date = datetime.date(date.year, date.month, date.day)
         if type(citations) is str:
-            self.citations = [i.strip() for i in citations.split(',')]
+            self.citations = set(i.strip() for i in citations.split(','))
+            self.citations.discard("")
         else:
             self.citations = citations
         self.courtname = courtname
