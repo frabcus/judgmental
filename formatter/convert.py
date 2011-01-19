@@ -24,8 +24,6 @@ def convert(file_list, dbfile_name, logfile, output_dir, process_pool):
     if not os.path.exists(dbfile_name):
         print "FATAL: I need a database file to read; run the analysis and crossreferencing phases."
         quit()
-    conn = sqlite.connect(dbfile_name, check_same_thread = not(process_pool.genuinely_parallel))
-    cursor = conn.cursor()
 
     finished_count = Counter()
 
