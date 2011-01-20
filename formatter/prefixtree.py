@@ -1,4 +1,4 @@
-class PrefixTree():
+class PrefixTree:
 
     def __init__(self, contains=None, children=None):
         self.contains = contains
