@@ -2,11 +2,6 @@
 Searches for citations to Bailii files
 """
 
-try:
-    import sqlite3 as sqlite
-except:
-    from pysqlite2 import dbapi2 as sqlite
-
 import re
 import os
 from general import *
@@ -17,76 +12,79 @@ import prefixtree
 citationtree = prefixtree.PrefixTree()
 
 
-def crossreference(file_list,dbfile_name,logfile,process_pool):
+def crossreference(file_list, dbfile_name, logfile, use_multiprocessing):
 
     print "-"*25
     print "Crossreferencing..."
 
-    print "Connecting to SQLite database"
-    if not os.path.exists(dbfile_name):
-        print "FATAL: I need a database file to read; run the analysis phase."
-        quit()
-    conn = sqlite.connect(dbfile_name, check_same_thread = not(process_pool.genuinely_parallel))
-    cursor = conn.cursor()
-    try:
-        cursor.execute('CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationid INTEGER)')
-    except sqlite.OperationalError:
-        print "FATAL: Crossreference table already exists; either drop it, or start again generating all metadata from scratch."
-        quit()
+    with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+        try:
+            cursor.execute('CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationid INTEGER)')
+        except sqlite.OperationalError:
+            print "FATAL: Crossreference table already exists; either drop it, or start again generating all metadata from scratch."
+            quit()
 
-    print "Processing file list"
-    # hopefully these two are sorted the same way
-    filename_list = sorted((os.path.basename(name),name) for name in file_list)
-    judgment_list = cursor.execute('SELECT filename,judgmentid FROM judgments ORDER BY filename')
-    all_list = [x for x in merge(filename_list,judgment_list)]
-    broadcast(logfile,"Recovered %d files for crossreferencing"%len(all_list))
+        print "Making prefix tree"
+        cursor.execute('SELECT citation,citationid FROM citations ORDER BY citation')
+        sorted_citations = [(a,i) for (a,i) in cursor if suitable(a)]
+        citationtree.populate(sorted_citations)
+        broadcast(logfile,"Read %d citation formats in database"%len(sorted_citations))
 
     # counts files processed and crossreferences found
     finished_count = Counter()
     crossreferences_count = Counter()
-
-    def crossreference_report(judgmentid,filename):
+    
+    def crossreference_report(basename):
         "Callback function; reports on success or failure"
         def closure(r):
-            "Take True and a set, or false and a message"
-            (s,x) = r
+            "Take True and a number, or false and a message"
+            (s,m) = r
             try:
                 if s:
                     finished_count.inc()
-                    print "crossreference:%6d. %s"%(finished_count.count, os.path.basename(filename))
-                    try:
-                        write_crossreferences_to_sql(judgmentid,x,cursor)
-                        crossreferences_count.add(len(x))
-                    except sqlite.IntegrityError, e:
-                        raise SqliteIntegrityError(e)
+                    crossreferences_count.add(m)
+                    print "crossreference:%6d. %s"%(finished_count.count,basename)
                 else:
-                    raise StandardConversionError(x)
-            except ConversionError, e:
-                e.log("crossreference",os.path.basename(filename),logfile)
+                    raise StandardConversionError(m)
+            except ConversionError,e:
+                e.log("crossreference",basename,logfile)
         return closure
 
-    print "Making prefix tree"
-    cursor.execute('SELECT citation,citationid FROM citations ORDER BY citation')
-    sorted_citations = [(a,i) for (a,i) in cursor if suitable(a)]
-    citationtree.populate(sorted_citations)
-    broadcast(logfile,"Read %d citation formats in database"%len(sorted_citations))
-    
     print "Searching through files"
-    for (basename,fullname,judgment_id) in all_list:
-        process_pool.apply_async(crossreference_file,(fullname,),callback=crossreference_report(judgment_id,basename))
+    with ProcessManager(use_multiprocessing) as process_pool:
+        for fullname in file_list:
+            basename = os.path.basename(fullname)
+            process_pool.apply_async(crossreference_file,(fullname,basename,dbfile_name,use_multiprocessing),callback=crossreference_report(basename))
 
-    process_pool.close()
-    process_pool.join()
-    conn.commit()
-    conn.close()
     broadcast(logfile,"Successfully searched %d files for crossreferences"%finished_count.count)
     broadcast(logfile,"Found %d crossreferences"%crossreferences_count.count)
 
 
 
-class NoFileMetadata(ConversionError):
-    def __init__(self):
-        self.message = "No metadata exists for this file"
+
+def crossreference_file(fullname,basename,dbfile_name,use_multiprocessing):
+    # returns a set of other cited judgments
+    try:
+        f = open_bailii_html(fullname)
+        citationset = set()
+        for (_,_,v) in citationtree.search(prepare_page(f.read()),unambiguous=True):
+            citationset.add(v)
+        with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+            try:
+                jids = list(cursor.execute('SELECT judgmentid FROM judgments WHERE filename=?',(basename,)))
+                if len(jids)>0:
+                    judgmentid = jids[0][0]
+                else:
+                    raise NoMetadata
+                for citationid in citationset:
+                    cursor.execute('INSERT INTO crossreferences(judgmentid,citationid) VALUES (?,?)', (judgmentid,citationid))
+            except sqlite.IntegrityError, e:
+                raise SqliteIntegrityError(e)
+        return (True,len(citationset))
+    except ConversionError, e:
+        return (False,e.message)
+
+
 
 
 
@@ -103,16 +101,6 @@ def prepare_page(data):
 
 
 
-def crossreference_file(fullname):
-    # returns a set of other cited judgments
-    try:
-        f = open_bailii_html(fullname)
-        a = set()
-        for (_,_,v) in citationtree.search(prepare_page(f.read()),unambiguous=True):
-            a.add(v)
-        return (True,a)
-    except ConversionError, e:
-        return (False,e.message)
 
 
 
@@ -123,7 +111,4 @@ def suitable(s):
     
 
 
-def write_crossreferences_to_sql(judgmentid,citationset,cursor):
-    for citationid in citationset:
-        cursor.execute('INSERT INTO crossreferences(judgmentid,citationid) VALUES (?,?)', (judgmentid,citationid))
 

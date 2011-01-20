@@ -2,11 +2,6 @@
 Extracts metadata from files and stores in a SQL database.
 """
 
-try:
-    import sqlite3 as sqlite
-except:
-    from pysqlite2 import dbapi2 as sqlite
-
 from dateutil.parser import parse as dateparse
 from lxml import html, etree
 import re
@@ -16,48 +11,38 @@ from general import *
 
 
 
-def analyse(file_list, dbfile_name, logfile, process_pool):
+def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
 
     print "-"*25
     print "Analysis..."
-    print "Initialising SQLite database"
-    conn = sqlite.connect(dbfile_name, check_same_thread = not(process_pool.genuinely_parallel))
-    cursor = conn.cursor()
-    try:
-        create_tables(cursor)
-    except sqlite.OperationalError:
-        print "FATAL: The database already exists. You must remove it before running me again."
-        quit()
+    with DatabaseManager(dbfile_name,use_multiprocessing,check=False) as cursor:
+        try:
+            create_tables(cursor)
+        except sqlite.OperationalError:
+            print "FATAL: The database already exists. You must remove it before running me again."
+            quit()
 
     finished_count = Counter()
 
     def analyse_report(filename):
         "Callback function; reports on success or failure"
         def closure(r):
-            "Takes True and a dict, or False and a message"
+            "Takes True and None, or False and a message"
             (s,x) = r
             try:
                 if s:
                     finished_count.inc()
                     print "analyse:%6d. %s"%(finished_count.count, os.path.basename(filename))
-                    try:
-                        write_metadata_to_sql(x,cursor)
-                    except sqlite.IntegrityError, e:
-                        raise StandardConversionError("sqlite.IntegrityError: %s"%str(e))
                 else:
                     raise StandardConversionError(x)
             except ConversionError, e:
                 e.log("analysis",os.path.basename(filename),logfile)
         return closure
 
-    for filename in file_list:
-        process_pool.apply_async(analyse_file,(filename,),callback=analyse_report(filename))
+    with ProcessManager(use_multiprocessing) as process_pool:
+        for filename in file_list:
+            process_pool.apply_async(analyse_file,(filename,dbfile_name,use_multiprocessing),callback=analyse_report(filename))
 
-    # That's all, folks
-    process_pool.close()
-    process_pool.join()
-    conn.commit()
-    conn.close()
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
 
@@ -70,30 +55,7 @@ def create_tables(cursor):
 
 
 
-def write_metadata_to_sql(d,cursor):
-    "Inserts judgment metadata to SQL database"
-
-    # make sure there's a unique identifier for the court
-    court_name = d["court_name"]
-    cursor.execute('SELECT courtid FROM courts WHERE name = ?', (court_name,))
-    result = cursor.fetchone()
-    if result:
-        courtid = result[0]
-    else:
-        cursor.execute('INSERT INTO courts(name) VALUES (?)', (court_name,))
-        courtid = cursor.lastrowid
-
-    # insert a record
-    cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url) VALUES (?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"]))
-    judgmentid = cursor.lastrowid
-
-    # store the citations
-    for i in set(i.strip() for i in d["citations"].split(',')):
-        cursor.execute('INSERT INTO citations(citation, judgmentid) VALUES (?, ?)', (i,judgmentid))
-
-
-
-def analyse_file(filename):
+def analyse_file(filename,dbfile_name,use_multiprocessing):
     try:
         page = html.parse(open_bailii_html(filename))
 
@@ -105,9 +67,37 @@ def analyse_file(filename):
         metadata["citations"] = find_citations(page,title)
         metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
         metadata["date"] = find_date(page,titletag,title)
-        return (True,metadata)
+        try:
+            write_metadata_to_sql(metadata,dbfile_name,use_multiprocessing)
+        except sqlite.IntegrityError, e:
+            raise StandardConversionError("sqlite.IntegrityError: %s"%str(e))
+        return (True,None)
     except ConversionError, e:
         return (False,e.message)
+
+
+def write_metadata_to_sql(d,dbfile_name,use_multiprocessing):
+    "Inserts judgment metadata to SQL database"
+
+    with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+
+        # make sure there's a unique identifier for the court
+        court_name = d["court_name"]
+        cursor.execute('SELECT courtid FROM courts WHERE name = ?', (court_name,))
+        result = cursor.fetchone()
+        if result:
+            courtid = result[0]
+        else:
+            cursor.execute('INSERT INTO courts(name) VALUES (?)', (court_name,))
+            courtid = cursor.lastrowid
+
+        # insert a record
+        cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url) VALUES (?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"]))
+        judgmentid = cursor.lastrowid
+
+        # store the citations
+        for i in set(i.strip() for i in d["citations"].split(',')):
+            cursor.execute('INSERT INTO citations(citation, judgmentid) VALUES (?, ?)', (i,judgmentid))
 
 
 

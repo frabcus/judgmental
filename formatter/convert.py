@@ -2,11 +2,6 @@
 Reads file metadata from database and transforms files.
 """
 
-try:
-    import sqlite3 as sqlite
-except:
-    from pysqlite2 import dbapi2 as sqlite
-
 from lxml import html, etree
 import re
 import os
@@ -16,16 +11,10 @@ from general import *
 
 
 
-def convert(file_list, dbfile_name, logfile, output_dir, process_pool):
+def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing):
 
     print "-"*25
     print "Conversion..."
-    print "Initialising SQLite database"
-    if not os.path.exists(dbfile_name):
-        print "FATAL: I need a database file to read; run the analysis and crossreferencing phases."
-        quit()
-    conn = sqlite.connect(dbfile_name, check_same_thread = not(process_pool.genuinely_parallel))
-    cursor = conn.cursor()
 
     finished_count = Counter()
 
@@ -47,28 +36,26 @@ def convert(file_list, dbfile_name, logfile, output_dir, process_pool):
         return closure
 
     print "Converting files"
-    for fullname in file_list:
-        basename = os.path.basename(fullname)
-        process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,not(process_pool.genuinely_parallel),output_dir),callback=convert_report(basename))
+    with ProcessManager(use_multiprocessing) as process_pool:
+        for fullname in file_list:
+            basename = os.path.basename(fullname)
+            process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,use_multiprocessing,output_dir),callback=convert_report(basename))
 
-    process_pool.close()
-    process_pool.join()
     broadcast(logfile,"Converted %d files successfully"%finished_count.count)
 
 
 
-def convert_file(fullname,basename,dbfile_name,check_same_thread,output_dir):
-    conn = sqlite.connect(dbfile_name, check_same_thread=check_same_thread)
-    cursor = conn.cursor()    
+def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
     try:
-        metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
-        try:
-            (judgmentid,title,date,court_name,bailii_url) = metadata[0]
-        except IndexError:
-            raise NoMetadata
-        citations = list(x[0] for x in cursor.execute('SELECT citation FROM citations WHERE judgmentid=?',(judgmentid,)))
-        crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=?',(judgmentid,)))
-        crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=?',(judgmentid,)))
+        with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
+            try:
+                (judgmentid,title,date,court_name,bailii_url) = metadata[0]
+            except IndexError:
+                raise NoMetadata
+            citations = list(x[0] for x in cursor.execute('SELECT citation FROM citations WHERE judgmentid=?',(judgmentid,)))
+            crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=?',(judgmentid,)))
+            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=?',(judgmentid,)))
 
         page = html.parse(open_bailii_html(fullname))
         opinion = find_opinion(page)
@@ -94,12 +81,8 @@ def convert_file(fullname,basename,dbfile_name,check_same_thread,output_dir):
 
         outfile = open(os.path.join(output_dir,basename),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
-        conn.commit()
-        conn.close()
         return (True,report)
     except ConversionError,e:
-        conn.commit()
-        conn.close()
         return (False,e.message)
 
 
@@ -152,10 +135,6 @@ def empty_paragraphs_to_breaks(opinion):
 
 
 
-
-class NoMetadata(ConversionError):
-    def __init__(self):
-        self.message = "no metadata found"
 
 class CantFindElement(ConversionError):
     def __init__(self,searchstring):
