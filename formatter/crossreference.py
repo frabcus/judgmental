@@ -67,7 +67,7 @@ def crossreference(file_list,dbfile_name,logfile,process_pool):
 
     print "Making prefix tree"
     cursor.execute('SELECT citation,citationid FROM citations ORDER BY citation')
-    sorted_citations = [(a,i) for (a,i) in cursor if suitable(a)]
+    sorted_citations = [(a,i) for (a,i) in cursor]
     citationtree.populate(sorted_citations)
     broadcast(logfile,"Read %d citation formats in database"%len(sorted_citations))
     
@@ -114,13 +114,6 @@ def crossreference_file(fullname):
     except ConversionError, e:
         return (False,e.message)
 
-
-
-def suitable(s):
-    "The sad fact of the matter is that some citations are junk."
-    ### This means we need to mend the citation extractor!
-    return len(s) > 7
-    
 
 
 def write_crossreferences_to_sql(judgmentid,citationset,cursor):

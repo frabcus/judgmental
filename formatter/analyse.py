@@ -88,7 +88,7 @@ def write_metadata_to_sql(d,cursor):
     judgmentid = cursor.lastrowid
 
     # store the citations
-    for i in set(i.strip() for i in d["citations"].split(',')):
+    for i in d["citations"]:
         cursor.execute('INSERT INTO citations(citation, judgmentid) VALUES (?, ?)', (i,judgmentid))
 
 
@@ -123,12 +123,14 @@ def find_citations(page,title):
     # try looking for a "Cite as:"
     for x in page.findall('//small/br'):
         if x.tail[:8]=="Cite as:":
-            return x.tail[8:].strip()
+            s = set(i.strip() for i in x.tail[8:].split(','))
+            s.discard('')
+            return s
 
     # does the title have the from "citation (date)"
     title_cite = re.compile("^(.*)\\([^(]*$").match(title)
     if title_cite is not None:
-        return title_cite.groups()[0].strip()
+        return [title_cite.groups()[0].strip()]
 
     raise CantFindCitation()
 
