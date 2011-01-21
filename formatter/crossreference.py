@@ -43,7 +43,6 @@ def crossreference(file_list,dbfile_name,logfile,process_pool):
 
     # counts files processed and crossreferences found
     finished_count = Counter()
-    crossreferences_count = Counter()
 
     def crossreference_report(judgmentid,filename):
         "Callback function; reports on success or failure"
@@ -56,7 +55,6 @@ def crossreference(file_list,dbfile_name,logfile,process_pool):
                     print "crossreference:%6d. %s"%(finished_count.count, os.path.basename(filename))
                     try:
                         write_crossreferences_to_sql(judgmentid,x,cursor)
-                        crossreferences_count.add(len(x))
                     except sqlite.IntegrityError, e:
                         raise SqliteIntegrityError(e)
                 else:
@@ -78,8 +76,13 @@ def crossreference(file_list,dbfile_name,logfile,process_pool):
     process_pool.close()
     process_pool.join()
 
-    print "Removing self-references"
+    cursor.execute('SELECT count() FROM citations')
+    crossreference_count = cursor.fetchone()[0]
+    broadcast(logfile,"Found %d crossreferences (including selfreferences)"%crossreference_count)
     cursor.execute('DELETE FROM crossreferences WHERE crossreferenceid IN (SELECT crossreferenceid FROM crossreferences JOIN citations ON crossreferences.citationid = citations.citationid WHERE crossreferences.judgmentid = citations.judgmentid)')
+    cursor.execute('SELECT count() FROM citations')
+    crossreference_count = cursor.fetchone()[0]
+    broadcast(logfile,"Found %d crossreferences (after removing selfreferences)"%crossreference_count)
 
     conn.commit()
     conn.close()
