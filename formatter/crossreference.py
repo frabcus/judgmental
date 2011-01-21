@@ -77,10 +77,13 @@ def crossreference(file_list,dbfile_name,logfile,process_pool):
 
     process_pool.close()
     process_pool.join()
+
+    print "Removing self-references"
+    cursor.execute('DELETE FROM crossreferences WHERE crossreferenceid IN (SELECT crossreferenceid FROM crossreferences JOIN citations ON crossreferences.citationid = citations.citationid WHERE crossreferences.judgmentid = citations.judgmentid)')
+
     conn.commit()
     conn.close()
     broadcast(logfile,"Successfully searched %d files for crossreferences"%finished_count.count)
-    broadcast(logfile,"Found %d crossreferences"%crossreferences_count.count)
 
 
 
