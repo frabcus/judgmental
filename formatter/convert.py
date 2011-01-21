@@ -11,8 +11,15 @@ from lxml import html, etree
 import re
 import os
 
+from StringIO import StringIO
+
 from general import *
 
+
+# must use a global variable to ensure it is visible throughout the process pool
+html_template_file = open("template.html",'r')
+html_template_stringio = StringIO(html_template_file.read())
+html_template_file.close()
 
 
 
@@ -71,8 +78,7 @@ def convert_file(fullname,basename,dbfile_name,check_same_thread,output_dir):
         page = html.parse(open_bailii_html(fullname))
         opinion = find_opinion(page)
 
-        ### is it really wise to repeatedly open this? Presumably not!
-        template = html.parse(open("template.html",'r'))
+        template = html.parse(html_template_stringio)
 
         report = []
 
