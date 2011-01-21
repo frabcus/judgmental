@@ -2,7 +2,7 @@
 Common utility code
 """
 
-
+import string
 from cStringIO import StringIO
 
 # a slightly modified version of UnicodeDammit from BeautifulSoup
@@ -21,7 +21,8 @@ def open_bailii_html(filename):
     start = a.find('<')
     if start == -1:
         raise StandardConversionError("There is no HTML in this file")
-    page = a[start:].replace('\r\n','\n').replace('\r','\n') # hmmmmmmm?!
+    page = a[start:].replace('\r\n','\n')
+    page = page.translate(string.maketrans('\r','\n'), '\x0c')
     return StringIO(page)
 
 
