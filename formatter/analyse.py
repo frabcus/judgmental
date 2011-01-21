@@ -120,17 +120,25 @@ class GotIt(Exception):
 
 def find_citations(page,title):
 
-    # try looking for a "Cite as:"
-    for x in page.findall('//small/br'):
-        if x.tail[:8]=="Cite as:":
-            s = set(i.strip() for i in x.tail[8:].split(','))
-            s.discard('')
-            return s
+    try:
+        # try looking for a "Cite as:"
+        for x in page.findall('//small/br'):
+            if x.tail[:8]=="Cite as:":
+                raise GotIt(x.tail[8:])
 
-    # does the title have the from "citation (date)"
-    title_cite = re.compile("^(.*)\\([^(]*$").match(title)
-    if title_cite is not None:
-        return [title_cite.groups()[0].strip()]
+        # does the title have the form "something [citeyear] cite (date)"?
+        title_cite = re.compile(r"(\[\d\d\d\d\].+)\(([^(]+)$").search(title)
+        if title_cite is not None:
+            try:
+                dateparse(title_cite.group(2).split(')')[0].strip())
+                raise GotIt(title_cite.group(1).replace(';',','))
+            except (ValueError, TypeError):
+                pass
+
+    except GotIt, g:
+        s = set(i.strip() for i in g.value.split(','))
+        s.discard('')
+        return s
 
     raise CantFindCitation()
 
