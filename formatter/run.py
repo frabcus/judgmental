@@ -102,39 +102,35 @@ if run_on_all_files:
                 file_list.append(os.path.join(path,f))
 
 # open logfile
-logfile = open(logfile_name,'w')
+with open(logfile_name,'w') as logfile:
 
-# some details
-broadcast(logfile,"File list contains %d files"%len(file_list))
+    # some details
+    broadcast(logfile,"File list contains %d files"%len(file_list))
 
-# delete the database
-if do_delete_db:
-    os.remove(dbfile_name)
+    # delete the database
+    if do_delete_db:
+        os.remove(dbfile_name)
 
-# analysis stage
-if do_analyse:
-    start = datetime.now()
-    analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
-    elapsed = datetime.now() - start
-    broadcast(logfile,"Analyse phase took %s"%elapsed)
+    # analysis stage
+    if do_analyse:
+        start = datetime.now()
+        analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+        elapsed = datetime.now() - start
+        broadcast(logfile,"Analyse phase took %s"%elapsed)
 
-# crossreference stage
-if do_crossreference:
-    start = datetime.now()
-    crossreference.crossreference(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
-    elapsed = datetime.now() - start
-    broadcast(logfile,"Crossreference phase took %s"%elapsed)
+    # crossreference stage
+    if do_crossreference:
+        start = datetime.now()
+        crossreference.crossreference(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+        elapsed = datetime.now() - start
+        broadcast(logfile,"Crossreference phase took %s"%elapsed)
 
-# convert stage
-if do_convert:
-    conversion_start = time.time()
-    start = datetime.now()
-    convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
-    elapsed = datetime.now() - start
-    broadcast(logfile,"Convert phase took %s"%elapsed)
-    if do_delete_html:
-        delete_html.delete_html(conversion_start,output_dir)
-                    
-
-# close logfile
-logfile.close()
+    # convert stage
+    if do_convert:
+        conversion_start = time.time()
+        start = datetime.now()
+        convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+        elapsed = datetime.now() - start
+        broadcast(logfile,"Convert phase took %s"%elapsed)
+        if do_delete_html:
+            delete_html.delete_html(conversion_start,output_dir)
