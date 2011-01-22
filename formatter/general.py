@@ -8,6 +8,89 @@ from cStringIO import StringIO
 # a slightly modified version of UnicodeDammit from BeautifulSoup
 from dammit import UnicodeDammit
 
+import os
+
+try:
+    import sqlite3 as sqlite
+except:
+    from pysqlite2 import dbapi2 as sqlite
+
+# Can we speed things up by using multiple cores?
+global multi_enabled
+try:
+    from multiprocessing.pool import Pool
+    print "Multiprocessing enabled (Python 2.6/3 style)"
+    multi_enabled = True
+except ImportError:
+    try:
+        from processing.pool import Pool
+        print "Multiprocessing enabled (Python 2.5 style)"
+        multi_enabled = True
+    except ImportError:
+        print "Multiprocessing disabled"
+        multi_enabled = False
+from fakepool import Pool as FakePool
+
+
+class ProcessManager():
+
+    def __init__(self,use_multiprocessing,verbose=False):
+        self.use_multiprocessing = use_multiprocessing
+        self.verbose = verbose
+
+    def __enter__(self):
+        if self.verbose:
+            print "Creating process pool"
+        if self.use_multiprocessing:
+            self.process_pool = Pool()
+        else:
+            self.process_pool = FakePool()
+        return self.process_pool
+    
+    def __exit__(self,errtype,val,traceback):
+        if self.verbose:
+            print "Closing and joining process pool"
+        self.process_pool.close()
+        self.process_pool.join()
+        return False
+
+
+
+class DatabaseManager():
+
+    def __init__(self,dbfile_name,use_multiprocessing,check=True,verbose=False):
+        """
+        multiprocessing is True or False.
+        execute is a list of pairs consisting of an SQL statement and an error message for if it doesn't work.
+        check is whether to ensure the database already exists.
+        """
+
+        self.dbfile_name = dbfile_name
+        self.check = check
+        self.use_multiprocessing = use_multiprocessing
+        self.verbose = verbose
+
+    def __enter__(self):
+        "Returns a cursor"
+        if self.verbose:
+            print "Connecting to SQLite database"
+        if self.check and not os.path.exists(self.dbfile_name):
+            print "FATAL: I need a database file to work on."
+            quit()
+        self.conn = sqlite.connect(self.dbfile_name,check_same_thread = not(self.use_multiprocessing))
+        return self.conn.cursor()
+
+    def __exit__(self,errtype,val,trace):
+        if self.verbose:
+            print "Committing and closing database connection"
+        self.conn.commit()
+        self.conn.close()
+        return False
+
+
+
+
+
 
 
 def open_bailii_html(filename):
@@ -39,6 +122,10 @@ class SqliteIntegrityError(ConversionError):
     def __init__(self,e):
         self.message = "sqlite.IntegrityError: %s"%str(e)
 
+class NoMetadata(ConversionError):
+    def __init__(self):
+        self.message = "No metadata exists for this file"
+
 
 
 class Counter:
@@ -54,50 +141,3 @@ class Counter:
 def broadcast(logfile,message):
     print message
     logfile.write("*** "+message+"\n")
-
-
-
-
-def merge(l1,l2):
-    "Silly general tool for merging two sorted lists"
-    i1 = iter(l1)
-    i2 = iter(l2)
-    t1 = i1.next()
-    n1 = t1[0]
-    t2 = i2.next()
-    n2 = t2[0]
-    while True:
-        if n1 < n2:
-            t1 = i1.next()
-            n1 = t1[0]
-        elif n1 > n2:
-            t2 = i2.next()
-            n2 = t2[0]
-        else:
-            yield t1 + t2[1:]
-            t1 = i1.next()
-            n1 = t1[0]
-            t2 = i2.next()
-            n2 = t2[0]
-
-
-def collate(l):
-    "Silly general tool for combining matching things from a sorted list."
-
-    first = True
-    x1 = None
-    ds = []
-    for (x2,d) in l:
-        if first:
-            first = False
-            x1 = x2
-            ds = [d]
-        elif x1==x2:
-            ds.append(d)
-        else:
-            yield(x1,ds)
-            x1 = x2
-            ds = [d]
-    if not first:
-        yield(x1,ds)
-    raise StopIteration

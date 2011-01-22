@@ -2,11 +2,6 @@
 Extracts metadata from files and stores in a SQL database.
 """
 
-try:
-    import sqlite3 as sqlite
-except:
-    from pysqlite2 import dbapi2 as sqlite
-
 from dateutil.parser import parse as dateparse
 from lxml import html, etree
 import re
@@ -16,57 +11,69 @@ from general import *
 
 
 
-def analyse(file_list, dbfile_name, logfile, process_pool):
+def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
 
     print "-"*25
     print "Analysis..."
-    print "Initialising SQLite database"
-    conn = sqlite.connect(dbfile_name, check_same_thread = not(process_pool.genuinely_parallel))
-    cursor = conn.cursor()
-    try:
+    with DatabaseManager(dbfile_name,use_multiprocessing,check=False) as cursor:
         create_tables(cursor)
-    except sqlite.OperationalError:
-        print "FATAL: The database already exists. You must remove it before running me again."
-        quit()
 
-    finished_count = Counter()
+        finished_count = Counter()
 
-    def analyse_report(filename):
-        "Callback function; reports on success or failure"
-        def closure(r):
-            "Takes True and a dict, or False and a message"
-            (s,x) = r
-            try:
-                if s:
-                    finished_count.inc()
-                    print "analyse:%6d. %s"%(finished_count.count, os.path.basename(filename))
-                    try:
-                        write_metadata_to_sql(x,cursor)
-                    except sqlite.IntegrityError, e:
-                        raise StandardConversionError("sqlite.IntegrityError: %s"%str(e))
-                else:
-                    raise StandardConversionError(x)
-            except ConversionError, e:
-                e.log("analysis",os.path.basename(filename),logfile)
-        return closure
+        def analyse_report(filename):
+            "Callback function; reports on success or failure"
+            def closure(r):
+                "Takes True and a dict, or False and a message"
+                (s,d) = r
+                try:
+                    if s:
+                        try:
+                            write_metadata_to_sql(d,cursor)
+                        except sqlite.IntegrityError, e:
+                            raise StandardConversionError("sqlite.IntegrityError: %s"%str(e))                        
+                        finished_count.inc()
+                        print "analyse:%6d. %s"%(finished_count.count, os.path.basename(filename))
+                    else:
+                        raise StandardConversionError(d)
+                except ConversionError, e:
+                    e.log("analysis",os.path.basename(filename),logfile)
+            return closure
 
-    for filename in file_list:
-        process_pool.apply_async(analyse_file,(filename,),callback=analyse_report(filename))
+        with ProcessManager(use_multiprocessing) as process_pool:
+            for filename in file_list:
+                process_pool.apply_async(analyse_file,(filename,dbfile_name,use_multiprocessing),callback=analyse_report(filename))
 
-    # That's all, folks
-    process_pool.close()
-    process_pool.join()
-    conn.commit()
-    conn.close()
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
 
 
 def create_tables(cursor):
     "Create tables in an SQL database"
-    cursor.execute('CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)')
-    cursor.execute('CREATE TABLE citations (citationid INTEGER PRIMARY KEY ASC, citation TEXT UNIQUE, judgmentid INTEGER)')
-    cursor.execute('CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE)')
+    try:
+        cursor.execute('CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)')
+        cursor.execute('CREATE TABLE citations (citationid INTEGER PRIMARY KEY ASC, citation TEXT UNIQUE, judgmentid INTEGER)')
+        cursor.execute('CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE)')
+    except sqlite.OperationalError:
+        print "FATAL: The database already exists. You must remove it before running me again."
+        quit()
+
+
+
+def analyse_file(filename,dbfile_name,use_multiprocessing):
+    try:
+        page = html.parse(open_bailii_html(filename))
+
+        metadata = {}
+        metadata["filename"] = os.path.basename(filename)
+        titletag = page.find("//title") 
+        metadata["title"] = title = extract(page,"//title")
+        metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
+        metadata["citations"] = find_citations(page,title)
+        metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
+        metadata["date"] = find_date(page,titletag,title)
+        return (True,metadata)
+    except ConversionError, e:
+        return (False,e.message)
 
 
 
@@ -90,24 +97,6 @@ def write_metadata_to_sql(d,cursor):
     # store the citations
     for i in d["citations"]:
         cursor.execute('INSERT INTO citations(citation, judgmentid) VALUES (?, ?)', (i,judgmentid))
-
-
-
-def analyse_file(filename):
-    try:
-        page = html.parse(open_bailii_html(filename))
-
-        metadata = {}
-        metadata["filename"] = os.path.basename(filename)
-        titletag = page.find("//title") 
-        metadata["title"] = title = extract(page,"//title")
-        metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
-        metadata["citations"] = find_citations(page,title)
-        metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
-        metadata["date"] = find_date(page,titletag,title)
-        return (True,metadata)
-    except ConversionError, e:
-        return (False,e.message)
 
 
 
