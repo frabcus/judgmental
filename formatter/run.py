@@ -22,6 +22,7 @@ Command-line options:
 
 import sys
 import os
+from datetime import datetime
 
 import analyse
 import crossreference
@@ -92,16 +93,25 @@ broadcast(logfile,"File list contains %d files"%len(file_list))
 
 # analysis stage
 if do_analyse:
+    start = datetime.now()
     analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+    elapsed = datetime.now() - start
+    broadcast(logfile,"Analyse phase took %s"%elapsed)
+
 
 # crossreference stage
-### should we ban multiprocessing?
 if do_crossreference:
+    start = datetime.now()
     crossreference.crossreference(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+    elapsed = datetime.now() - start
+    broadcast(logfile,"Crossreference phase took %s"%elapsed)
 
 # convert stage
 if do_convert:
+    start = datetime.now()
     convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+    elapsed = datetime.now() - start
+    broadcast(logfile,"Convert phase took %s"%elapsed)
 
 # close logfile
 logfile.close()
