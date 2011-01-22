@@ -13,6 +13,12 @@ Command-line options:
   --no-convert
        Does not generate any html output
 
+  --delete-db
+       Deletes the database file before starting
+
+  --delete-html
+       After converting, removes any HTML output still remaining from previous runs. Note that, to ensure continuous usability of the output directory, it is executed only after conversion has occurred.
+
   --slow
        Refuses to use multiprocessing
 
@@ -22,11 +28,13 @@ Command-line options:
 
 import sys
 import os
+import time
 from datetime import datetime
 
 import analyse
 import crossreference
 import convert
+import delete_html
 from general import *
 
 
@@ -43,6 +51,8 @@ do_analyse = True
 do_crossreference = True
 do_convert = True
 run_on_all_files = True
+do_delete_db = False
+do_delete_html = False
 file_list = []
 
 # parse command-line options
@@ -62,6 +72,12 @@ while len(arguments)>0:
     elif a == "--slow":
         print "Option --slow selected"
         use_multiprocessing = False
+    elif a == "--delete-html":
+        print "Option --delete-html selected"
+        do_delete_html = True
+    elif a == "--delete-db":
+        print "Option --delete-db selected"
+        do_delete_db = True
     elif a == "--files":
         print "Using file list supplied"
         run_on_all_files = False
@@ -91,13 +107,16 @@ logfile = open(logfile_name,'w')
 # some details
 broadcast(logfile,"File list contains %d files"%len(file_list))
 
+# delete the database
+if do_delete_db:
+    os.remove(dbfile_name)
+
 # analysis stage
 if do_analyse:
     start = datetime.now()
     analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
     elapsed = datetime.now() - start
     broadcast(logfile,"Analyse phase took %s"%elapsed)
-
 
 # crossreference stage
 if do_crossreference:
@@ -108,10 +127,14 @@ if do_crossreference:
 
 # convert stage
 if do_convert:
+    conversion_start = time.time()
     start = datetime.now()
     convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
     elapsed = datetime.now() - start
     broadcast(logfile,"Convert phase took %s"%elapsed)
+    if do_delete_html:
+        delete_html.delete_html(conversion_start,output_dir)
+                    
 
 # close logfile
 logfile.close()
