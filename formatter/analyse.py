@@ -30,7 +30,7 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
                         try:
                             write_metadata_to_sql(d,cursor)
                         except sqlite.IntegrityError, e:
-                            raise StandardConversionError("sqlite.IntegrityError: %s"%str(e))                        
+                            raise StandardConversionError("sqlite.IntegrityError: %s - Citations extracted: %s "%(str(e), d['citations']))
                         finished_count.inc()
                         print "analyse:%6d. %s"%(finished_count.count, os.path.basename(filename))
                     else:
@@ -66,7 +66,7 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         metadata = {}
         metadata["filename"] = os.path.basename(filename)
         titletag = page.find("//title") 
-        metadata["title"] = title = extract(page,"//title")
+        metadata["title"] = title = re.sub('  +', ' ',extract(page,"//title").replace('\n', ' '))
         metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
         metadata["citations"] = find_citations(page,title)
         metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
@@ -109,25 +109,71 @@ class GotIt(Exception):
 
 def find_citations(page,title):
 
-    try:
-        # try looking for a "Cite as:"
-        for x in page.findall('//small/br'):
-            if x.tail[:8]=="Cite as:":
-                raise GotIt(x.tail[8:])
+    # This is messy, ad-hoc code that needs to be cleaned up
 
-        # does the title have the form "something [citeyear] cite (date)"?
-        title_cite = re.compile(r"(\[\d\d\d\d\].+)\(([^(]+)$").search(title)
-        if title_cite is not None:
+    # Important: if you are still using this in the year 2999 make sure to fix the millenium bugs below. Although perhaps UK case law data will be a bit more open by then? Well, I can dream...
+
+    def rstrip_date(s):
+        date = re.search(r'.+?(\([^(]+)$', s)
+        if date is not None:
+            possible_date = date.group(1).split(')')[0].strip(', \n(')
+            if possible_date.isdigit():
+                if re.search(r'^[12]\d\d\d$', possible_date) is not None:
+                    return s[:date.start(1)].strip()
+                else:
+                    return s
             try:
-                dateparse(title_cite.group(2).split(')')[0].strip())
-                raise GotIt(title_cite.group(1).replace(';',','))
+                dateparse(possible_date)
+                s = s[:date.start(1)].strip()
             except (ValueError, TypeError):
                 pass
-
-    except GotIt, g:
-        s = set(i.strip() for i in g.value.split(','))
-        s.discard('')
         return s
+
+    def make_citeset(s):
+        o = set(re.sub('  +',' ',i.strip(', \n')) for i in s.replace(u'\xa0',' ').split('\n'))
+        o.discard('')
+        j = set()
+        for cite in o:
+            year = re.search(r'\[[12]\d\d\d\]|\([12]\d\d\d\)',cite)
+            if year is not None:
+                cite = cite[year.start():]
+                subcites = set()
+                if cite[0] == '[':
+                    r = re.compile(r'.+?(\[[12]\d\d\d\])')
+                else:
+                    r = re.compile(r'.+?(\([12]\d\d\d\))')
+                while True:
+                    year_next = r.search(cite)
+                    if year_next is not None:
+                        prev = rstrip_date(cite[:year_next.start(1)].rstrip(' \n'))
+                        if len(prev) > 6:
+                            subcites.add(prev)
+                        cite = cite[year_next.start(1):]
+                    else:
+                        break
+                cite = rstrip_date(cite)
+                if len(cite) > 6:
+                    subcites.add(cite)
+                j = j.union(subcites)
+            else:
+                j.add(rstrip_date(cite))
+        j.discard('')
+        return j
+
+    # try looking for a "Cite as:"
+    for x in page.findall('//small/br'):
+        if x.tail[:8]=="Cite as:":
+            c = make_citeset(x.tail[8:])
+            if c:
+                return c
+
+    # does the title have the form "something [citeyear] stuff"?
+    title_cite = re.search(r"\[[12]\d\d\d\]",title)
+    if title_cite is not None:
+        x = title[title_cite.start():].replace(';','\n')
+        c = make_citeset(x)
+        if c:
+            return c
 
     raise CantFindCitation()
 
