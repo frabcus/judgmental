@@ -59,8 +59,8 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
             except IndexError:
                 raise NoMetadata
             citations = list(x[0] for x in cursor.execute('SELECT citation FROM citations WHERE judgmentid=?',(judgmentid,)))
-            crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=?',(judgmentid,)))
-            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=?',(judgmentid,)))
+            crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
 
         page = html.parse(open_bailii_html(fullname))
         opinion = find_opinion(page)
@@ -82,6 +82,34 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
         template.find('//div[@id="meta-date"]').text = date
         template.find('//span[@id="meta-citation"]').text = ", ".join(citations)
         template.find('//div[@id="content"]/h1').text = court_name
+
+        # add links to crossreferences, or delete the templates for them
+        if len(crossreferences_in)==0 and len(crossreferences_out)==0:
+            template.find('//div[@id="crossreferences"]').drop_tree()
+        else:
+            if len(crossreferences_in)==0:
+                template.find('//span[@id="crossreferences_in"]').drop_tree()
+            else:
+                l_in = template.find('//ul[@id="crossreferences_in_list"]')
+                for (t,f) in crossreferences_in:
+                    li = etree.Element("li")
+                    a = etree.Element("a")
+                    a.text = t
+                    a.attrib["href"] = f
+                    li.append(a)
+                    l_in.append(li)
+            if len(crossreferences_out)==0:
+                template.find('//span[@id="crossreferences_out"]').drop_tree()
+            else:
+                l_out = template.find('//ul[@id="crossreferences_out_list"]')
+                for (t,_,f) in crossreferences_out:
+                    li = etree.Element("li")
+                    a = etree.Element("a")
+                    a.text = t
+                    a.attrib["href"] = f
+                    li.append(a)
+                    l_out.append(li)
+
 
         outfile = open(os.path.join(output_dir,basename),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
