@@ -53,11 +53,11 @@ def crossreference(file_list, dbfile_name, logfile, use_multiprocessing):
 
         # remove duplicates
         broadcast(logfile,"Successfully searched %d files for crossreferences"%finished_count.count)
-        cursor.execute('SELECT count() FROM citations')
+        cursor.execute('SELECT count() FROM crossreferences')
         crossreference_count = cursor.fetchone()[0]
         broadcast(logfile,"Found %d crossreferences (including selfreferences)"%crossreference_count)
         cursor.execute('DELETE FROM crossreferences WHERE crossreferenceid IN (SELECT crossreferenceid FROM crossreferences JOIN citations ON crossreferences.citationid = citations.citationid WHERE crossreferences.judgmentid = citations.judgmentid)')
-        cursor.execute('SELECT count() FROM citations')
+        cursor.execute('SELECT count() FROM crossreferences')
         crossreference_count = cursor.fetchone()[0]
         broadcast(logfile,"Found %d crossreferences (after removing selfreferences)"%crossreference_count)
 
