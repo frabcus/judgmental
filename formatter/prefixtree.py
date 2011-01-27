@@ -37,11 +37,11 @@ class PrefixMaster:
             newmatches = []
             for (n,i,x) in matches:
                 n2 = n.child(c)
+                x2 = n.content() or x
                 if n2 is None:
-                    if x is not None:
-                        yield (i,x)
+                    if x2 is not None:
+                        yield (i,x2)
                 else:
-                    x2 = n.content() or x
                     newmatches.append((n2,i,x2))
             matches = newmatches
 
