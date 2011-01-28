@@ -121,9 +121,9 @@ def make_indexes(dbfile_name, logfile, output_dir, use_multiprocessing):
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
             courts = list(cursor.execute('SELECT courtid, name FROM courts'))
     	
+    	process_pool.apply_async(make_top_index,(output_dir,),callback=convert_report("top"))
     	for (id, name) in courts:
     		process_pool.apply_async(make_court_index,(id,name,dbfile_name,use_multiprocessing,output_dir),callback=convert_report(name))
-
 
     broadcast(logfile,"Converted %d files successfully"%finished_count.count)
 
@@ -141,8 +141,9 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 	try:
 	
 		template = html.parse(html_template_index_stringio)
-		template.find('//title').text = name
+		template.find('//title').text = name + ": Judgmental"
 		template.find('//div[@id="content"]/h1').text = name
+		template.find('//span[@id="bc-courtname"]').text = name
 		missing_index = template.find('//div[@class="index"]')
 		missing_index.text = ""
 		table = make_element("table",{},"")
@@ -191,6 +192,41 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 		return (True,"")
 				
 				
+
+	except ConversionError,e:
+		return (False,e.message)
+	except Exception, e:
+		# Something really unexpected happened
+		return (False, traceback.format_exc())
+		
+		
+def make_top_index(output_dir):
+	try:
+		print "make_top_index"
+		template = html.parse(html_template_index_stringio)
+		name = "All Courts and Tribunals"
+		template.find('//title').text = name + ": Judgmental"
+		template.find('//div[@id="content"]/h1').text = name
+		template.find('//span[@id="bc-courtname"]').text = ""
+		missing_index = template.find('//div[@class="index"]')
+		missing_index.text = ""
+
+		print "make_top_index"
+
+
+		for (short, long) in courts:
+			
+			case = make_element("div", {"class": "row"}, "")
+			link = make_element("a", {"href": short+".html"}, long)
+			case.append(link)
+			case.tail = "\n"
+			missing_index.append(case)
+
+		print "make_top_index"
+				
+		outfile = open(os.path.join(output_dir,"index.html"),'w')
+		outfile.write(etree.tostring(template, pretty_print=True))
+		return (True,"")
 
 	except ConversionError,e:
 		return (False,e.message)
