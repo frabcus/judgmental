@@ -11,6 +11,20 @@
 
 
   <body>
+
+    <script type="text/javascript">
+function showHide(name) {
+	if (document.getElementById(name)) {
+		if (document.getElementById(name).style.display != 'none') {
+			document.getElementById(name).style.display = 'none';
+		}
+		else {
+			document.getElementById(name).style.display = 'inline';
+		}
+	}
+}
+    </script>
+
     <div id="page_container">
       <div id="page_inner">
         <div id="header">
@@ -31,15 +45,7 @@
           <div id="breadcrumb">
             <span class="you_are">This judgment:</span>
             <a href="/">Home</a>
-            <a href="/MISSING_LINK" class="court" id="bc-courtname">MISSING COURT NAME</a>
-            <span class="here" id="bc-description">MISSING DESCRIPTION</span>
-          </div>
-
-          <div class="meta">
-            <span class="cite_as">Cite as:</span>
-            <span class="here" id="meta-citation">
-              MISSING CITATION DETAILS
-            </span> 
+            <span class="here" id="bc-courtname">MISSING DESCRIPTION</span>
           </div>
 
 

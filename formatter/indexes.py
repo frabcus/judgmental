@@ -15,10 +15,14 @@ from general import *
 
 
 # must use a global variable to ensure it is visible throughout the process pool
-#with open("template.html",'r') as html_template_file:
-#    html_template_stringio = StringIO(html_template_file.read())
 with open("template_index.html",'r') as html_template_file:
     html_template_index_stringio = StringIO(html_template_file.read())
+
+# List of long and short names for courts.  The short names mostly match those
+# in neutral citations.
+
+# This could be better placed somewhere else, possibly in the courts table of
+# judgmental.db, if that could be stable instead of regenerated.
 
 courts = [
 ("UKSC", "United Kingdom Supreme Court"),
@@ -83,6 +87,9 @@ courts = [
 ("UKFTT (TC)", "United Kingdom First Tier Tribunal (Tax)"),
 ("UKFTT (HESC)", "First-tier Tribunal (Health Education and Social Care Chamber)")]
 
+months = ["", "January", "February", "March", "April", "May", "June",
+	"July", "August", "September", "October", "November", "December"]
+
 def make_indexes(dbfile_name, logfile, output_dir, use_multiprocessing):
 
     print "-"*25
@@ -130,13 +137,17 @@ def make_element(tag,attribs,text):
 def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 	current_year=0
 	current_month=0
-	yr = None
+	year_content_div = None
 	try:
 	
 		template = html.parse(html_template_index_stringio)
 		template.find('//title').text = name
+		template.find('//div[@id="content"]/h1').text = name
 		missing_index = template.find('//div[@class="index"]')
 		missing_index.text = ""
+		table = make_element("table",{},"")
+		missing_index.append(table)
+
 
 		short_name = [short for (short, long) in courts if long == name][0]
 
@@ -147,18 +158,33 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 
 				date = dateparse(j[0])
 				if date.year != current_year or date.month != current_month:
-					month = date.strftime("%B %Y")
-					print month
+					# strftime doesn't work with dates before 1900
+					month_human = months[date.month] + " " + str(date.year)
+					month_id = "%d-%d" % (date.year, date.month)
+					print month_human
 					current_year = date.year
 					current_month = date.month
-					yr = make_element("div", {"class": "year"}, month + "\n")
-					missing_index.append(yr)
+					
+					table_row = make_element("tr", {}, "")
+					table_header = make_element("td", {}, "")
+					table_content = make_element("td", {}, "")
+					table_row.append(table_header)
+					table_row.append(table_content)
+					table.append(table_row)
+					
+					year_head_div = make_element("div", {"class": "index-year",
+							"onclick": 'showHide("%s");' % month_id}, month_human + "\n")
+					table_header.append(year_head_div)
+					year_content_div = make_element("div", {"class": "index-judgments",
+					    "id": month_id, "style": "display: none"}, "")
+					table_content.append(year_content_div)
+					
 
-				row = make_element("div", {"class": "row"}, "")
+				case = make_element("div", {"class": "row"}, "")
 				link = make_element("a", {"href": j[3]}, j[2])
-				row.append(link)
-				row.tail = "\n"
-				yr.append(row)
+				case.append(link)
+				case.tail = "\n"
+				year_content_div.append(case)
 				
 		outfile = open(os.path.join(output_dir,short_name+".html"),'w')
 		outfile.write(etree.tostring(template, pretty_print=True))

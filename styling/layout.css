@@ -51,6 +51,31 @@ html, body {
 		clear:both;
 	}
 	
+/* Indexes --------------------------------------------------- */
+
+td {
+    vertical-align: top;
+}
+
+.index-year {
+	width: 150px;
+	margin: 10px 0;
+	float: left;
+	display: block;
+	background:url(bullet_go.png) center right no-repeat;
+	border:1px solid #999;
+	-moz-border-radius:5px;
+	padding:10px;
+	font-weight: bold;
+}
+
+.index-judgments {
+	width: 530px;
+	margin: 10px;
+	float: right;
+	display: none;
+}
+
 /* Navigation ------------------------------------------------ */
 	
 	#site_title h1 { padding-top:10px;}
