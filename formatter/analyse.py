@@ -53,6 +53,7 @@ def create_tables(cursor):
         cursor.execute('CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)')
         cursor.execute('CREATE TABLE citations (citationid INTEGER PRIMARY KEY ASC, citation TEXT UNIQUE, judgmentid INTEGER)')
         cursor.execute('CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE)')
+        cursor.execute('CREATE TABLE parties (partyid INTEGER PRIMARY KEY ASC, name TEXT, position INTEGER, judgmentid INTEGER)')
     except sqlite.OperationalError:
         print "FATAL: The database already exists. You must remove it before running me again."
         quit()
@@ -71,6 +72,7 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         metadata["citations"] = find_citations(page,title)
         metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
         metadata["date"] = find_date(page,titletag,title)
+        metadata["parties"] = parties_from_title(title)
         return (True,metadata)
     except ConversionError, e:
         return (False,e.message)
@@ -97,6 +99,10 @@ def write_metadata_to_sql(d,cursor):
     # store the citations
     for i in d["citations"]:
         cursor.execute('INSERT INTO citations(citation, judgmentid) VALUES (?, ?)', (i,judgmentid))
+
+    # store the parties
+    for (i,n) in d["parties"]:
+        cursor.execute('INSERT INTO parties(position, name, judgmentid) VALUES (?, ?, ?)', (i,n,judgmentid))
 
 
 
@@ -243,6 +249,23 @@ def find_date(page,titletag,titletext):
         return g.value.date()
 
     raise CantFindDate()
+
+
+
+def parties_from_title(title):
+    """
+    We attempt to recognise the name of the parties to the case.
+
+    We generate a list of pairs (i,x) where i is 1 if it occurs before the "v." (so quite likely a claimant) and 2 if it occurs afterwards (so probably a respondant), and x is the name of the party.
+    """
+
+    title,_,_ = title.partition("[")
+    first,_,second = title.replace(" v. "," v ").partition(" v ")
+
+    if second:
+        return [(1,p.strip()) for p in second.split("&amp;")]+[(2,p.strip()) for p in first.split("&")]
+    else:
+        return []
 
 
 
