@@ -2,7 +2,7 @@
 Prefix trees
   http://en.wikipedia.org/wiki/Trie
 
-We have a "search" algorithm, which returns all maximal substrings which match. There is also a fast build algorithm, "populate", which requires the input keys to be sorted.
+Functionality is split between PrefixMaster and PrefixTree.
 """
 
 
@@ -31,20 +31,122 @@ class PrefixMaster:
         Searches through a string, and yields all maximal matches.
         Yields pairs consisting of the start position and the key.
         """
-        matches = []
-        for (k,c) in enumerate(l):
-            matches.append((self,k,None))
-            newmatches = []
-            for (n,i,x) in matches:
-                n2 = n.child(c)
-                x2 = n.content() or x
-                if n2 is None:
-                    if x2 is not None:
-                        yield (i,x2)
-                else:
-                    newmatches.append((n2,i,x2))
-            matches = newmatches
+        return normalising_search(lambda x:x,l)
 
+    def normalising_search(self,p,l):
+        """
+        Calls p on every character; p returns a string (well,
+        maybe just an iterable of characters). It is this string
+        that is used for the prefix tree. Otherwise like search.
+        """
+        matches = []
+        for (k,c1) in enumerate(l):
+            for c in p(c1):
+                matches.append((self,k,None))
+                newmatches = []
+                for (n,i,x) in matches:
+                    n2 = n.child(c)
+                    x2 = n.content() or x
+                    if n2 is None:
+                        if x2 is not None:
+                            yield (i,x2)
+                    else:
+                        newmatches.append((n2,i,x2))
+                matches = newmatches
+
+    def search_and_replace(self,p,f,l):
+        """
+        Yields successive characters of the input, appropriately normalised,
+        with matches replaced by f of the matching input and the key.
+
+        As we go through, we maintain:
+         - a list of input characters we're not sure about
+         - the start position in that document of those characters
+         - a set of possible matches, which are tuples consisting of:
+            - current prefixtree node (or None, if no further match is possible)
+            - start index in input string
+            - last match end index in input string (None, if no match made yet)
+            - last match value (None, if no match made yet)
+        """
+        unprocessed = []
+        shift = 0
+        matches = []
+
+        def advance_match_states(c,k,l):
+            newl = []
+            for (node,start,lastend,lastval) in matches:
+                node2 = node.child(c)
+                end2 = (node.content() and k) or lastend
+                val2 = node.content() or lastval
+                if node2 or val2:
+                    newl.append((node2,start,end2,val2))
+            return newl
+
+        def finalise_match_states(k,l):
+            newl = []
+            for (node,start,lastend,lastval) in matches:
+                end2 = (node.content() and k) or lastend
+                val2 = node.content() or lastval
+                if val2:
+                    newl.append((node,start,end2,val2))
+            return newl
+
+        for (k,c1) in enumerate(l):
+            unprocessed.append(c1)
+            for c in p(c1):
+                matches.append((self,k,None,None))
+                matches = advance_match_states(c,k,matches)
+
+                # process matches
+                while len(matches)>0 and matches[0][0] is None and matches[0][2] is not None:
+                    # release replacement
+                    (node,start,end,val) = matches[0]
+                    matchstr = "".join(unprocessed[(start-shift):(end-shift)])
+                    for x in f(matchstr,val):
+                        yield x
+                    matches = matches[1:]
+
+                    # cancel work on matches which clash
+                    while len(matches)>0 and matches[0][1]<end:
+                        matches = matches[1:]
+
+                    # flush matched text
+                    unprocessed = unprocessed[(end-shift):]
+                    shift = end
+
+            # release unmatchable data as unchanged
+            if len(matches)>0:
+                newshift=matches[0][1]
+            else:
+                newshift=k
+            if newshift>shift:
+                for x in unprocessed[:(newshift-shift)]:
+                    yield x
+                unprocessed = unprocessed[(newshift-shift):]
+                shift=newshift
+
+        # deal with what's left: go through remaining matches
+        matches = finalise_match_states(k+1,matches)
+
+        while len(matches)>0:
+            # release replacement
+            (node,start,end,val) = matches[0]
+            matchstr = "".join(unprocessed[(start-shift):(end-shift)])
+            for x in f(matchstr,val):
+                yield x
+            matches = matches[1:]
+
+            # cancel work on matches which clash
+            while len(matches)>0 and matches[0][1]<end:
+                matches = matches[1:]
+
+            # flush matched text
+            unprocessed = unprocessed[(end-shift):]
+            shift = end
+
+        # release unmatchable data as unchanged
+        for x in unprocessed:
+            yield x
 
 
 
@@ -125,7 +227,7 @@ class PrefixTree(PrefixMaster):
         (val,d)=subtree_contents(0,0,len(l))
         self.contains = val
         self.children = d
-                
+        return self
         
         
             
