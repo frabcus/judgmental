@@ -52,7 +52,7 @@ while len(arguments)>0:
     	verbose = True
 
 uritemplate = "http://legislation.data.gov.uk/ukpga/%d/data.feed"
-dbfile = "judgmental.db"
+dbfile = "../../judgmental.db"
 
 with DatabaseManager(dbfile, False) as cursor:
 	# Create table
