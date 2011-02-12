@@ -9,7 +9,7 @@ There are two concepts we have invented to make the code general.
 1. A "charstream" is an iter of pairs (c,n) where c is a character, and n is an integer. This is supposed to represent characters of a patched string together with their positions in the original.
    Of course, a charstream can be produced from a string using enumerate.
 
-2. A "normalising function" takes an iter of chars and returns a character stream.
+2. A "normalising function" takes an iter of chars and returns a charstream.
 """
 
 
@@ -25,16 +25,12 @@ def composed_normalisers(g,f,l):
     "Composes two normalising functions and applies them to l. The problem, of course, is in renumbering"
     (fl,fl2) = tee(f(l))
     gfl = g(x for (i,x) in fl2)
-    c = 0
-    try:
-        (i,x) = fl.next()
-        for (j,y) in gfl:
-            for z in range(j-c):
-                (i,x) = fl.next()
-            c = j
-            yield (i,y)
-    except StopIteration:
-        pass
+    c = -1
+    for (j,y) in gfl:
+        for z in range(j-c):
+            (i,x) = fl.next()
+        c = j
+        yield (i,y)
 
 
 def unenumerate(l):
