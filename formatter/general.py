@@ -93,13 +93,36 @@ class DatabaseManager():
 
 
 
-def open_bailii_html(filename):
+def open_bailii_html(filename, salvage_bad_pages = True):
     "Sort out encoding problems, discard everything up to the first '<' (eg. the BOM) and do CRLF -> LF"
     inf = open(filename,'r')
     data = inf.read()
-    u = UnicodeDammit(data, smartQuotesTo=None, isHTML=True).unicode
+    v = UnicodeDammit(data, smartQuotesTo=None, isHTML=True)
+    u = v.unicode
+
     if u is None:
-        raise StandardConversionError('I cannot read this file: the invalid bytes need to be patched first')
+        if not salvage_bad_pages:
+            raise StandardConversionError('I cannot read this file: perhaps invalid bytes need to be patched first?')
+        d = list(v.triedEncodings)
+        if v.declaredHTMLEncoding != 'ascii':
+            if 'ascii' in d:
+                d.remove('ascii')
+        if v.declaredHTMLEncoding != 'utf-8' and (len(data) < 3 or data[:3] != '\xef\xbb\xbf'):
+            if 'utf-8' in d:
+                d.remove('utf-8')
+        d.reverse()
+        while len(d) > 0:
+            try:
+                c = d.pop()
+                if c.lower() == "iso-8859-1":
+                    c = "windows-1252"
+                u = data.decode(c, 'replace')
+                break
+            except LookupError:
+                pass
+        if u is None:
+            raise Exception("Unexpected error in open_bailii_html. This should be impossible!")
+
     a = u.encode('ascii', 'xmlcharrefreplace')
     start = a.find('<')
     if start == -1:
