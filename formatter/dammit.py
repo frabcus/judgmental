@@ -208,7 +208,7 @@ class UnicodeDammit:
                 'ascii').lower()
             if isHTML:
                 self.declaredHTMLEncoding = xml_encoding
-            if sniffed_xml_encoding and \
+            if sniffed_xml_encoding and sniffed_xml_encoding != 'ascii' and \
                (xml_encoding in ('iso-10646-ucs-2', 'ucs-2', 'csunicode',
                                  'iso-10646-ucs-4', 'ucs-4', 'csucs4',
                                  'utf-16', 'utf-32', 'utf_16', 'utf_32',
