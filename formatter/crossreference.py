@@ -77,7 +77,7 @@ def crossreference_file(fullname,basename,dbfile_name,use_multiprocessing):
     try:
         f = open_bailii_html(fullname)
         citationset = set()
-        for (_,v) in citationtree.search(prepare_page(f.read())):
+        for (_,v) in citationtree.search(prefixtree.compose_normalisers(prefixtree.remove_excess_spaces,prefixtree.remove_html),f.read()):
             citationset.add(v)
         return (True,citationset)
     except ConversionError, e:
@@ -96,22 +96,5 @@ def write_crossreferences_to_sql(citationset,basename,cursor):
             cursor.execute('INSERT INTO crossreferences(judgmentid,citationid) VALUES (?,?)', (judgmentid,citationid))
     except sqlite.IntegrityError, e:
         raise SqliteIntegrityError(e)
-
-
-
-
-def remove_html_tags(data):
-    p = re.compile(r'<.*?>')
-    return p.sub('', data)
-
-def remove_extra_spaces(data):
-    p = re.compile(r'\s+')
-    return p.sub(' ', data)
-
-def prepare_page(data):
-    return remove_extra_spaces(remove_html_tags(data))
-
-
-
 
 

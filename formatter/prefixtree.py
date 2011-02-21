@@ -57,6 +57,22 @@ def violently_normalise(l):
             yield (n,c.lower())
 
 
+
+def remove_excess_spaces(l):
+    "Replace multiple spaces with a single space"
+    hadspace = False
+    for (n,c) in enumerate(l):
+        if c.isspace():
+            if not hadspace:
+                hadspace = True
+                yield (n,c)
+        else:
+            hadspace = False
+            yield (n,c)
+                
+
+
+
 def remove_html(l):
     "Strip out tags; replace &amp; and &lt; and &gt;"
 
@@ -107,15 +123,16 @@ class PrefixMaster:
         Searches through a string, and yields all maximal matches.
         Yields pairs consisting of the start position and the key.
         """
-        return self.search(enumerate(s))
+        return self.search(enumerate,s)
 
-    def search(self,l):
+    def search(self,p,l):
         """
-        Searches through a charstream, and yields all maximal matches.
-        Yields pairs consisting of the start position and the key.
+        Searches through a string, normalised by p, and yields all
+        maximal matches. Yields pairs consisting of the start position
+        and the key.
         """
         matches = []
-        for (k,c) in l:
+        for (k,c) in p(l):
             matches.append((self,k,None))
             newmatches = []
             for (n,i,x) in matches:
