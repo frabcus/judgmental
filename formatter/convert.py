@@ -7,8 +7,11 @@ import re
 import os
 
 from StringIO import StringIO
-
+from prefixtree import *
 from general import *
+
+
+legislation_tree = PrefixTree()
 
 
 # must use a global variable to ensure it is visible throughout the process pool
@@ -16,10 +19,22 @@ with open("template.html",'r') as html_template_file:
     html_template_stringio = StringIO(html_template_file.read())
 
 
-def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing):
+def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
 
     print "-"*25
     print "Conversion..."
+
+    if do_legislation:
+        print "Making legislation prefix tree"
+        with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+            try:
+                cursor.execute('CREATE TABLE lawreferences (lawreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, legislationid INTEGER)')
+            except sqlite.OperationalError:
+                print "FATAL: The law references table already exists. Remove it before running me again."
+                quit()
+            legislation = sorted(make_unique(((unenumerate(violently_normalise(t)),(l,i)) for (t,l,i) in cursor.execute('SELECT title,link,legislationid FROM legislation')),lambda (x,_):x))
+            legislation_tree.populate(legislation)
+        print "Added %s names of legislation objects"%len(legislation)
 
     finished_count = Counter()
 
@@ -44,13 +59,13 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing):
     with ProcessManager(use_multiprocessing) as process_pool:
         for fullname in file_list:
             basename = os.path.basename(fullname)
-            process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,use_multiprocessing,output_dir),callback=convert_report(basename))
+            process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation),callback=convert_report(basename))
 
     broadcast(logfile,"Converted %d files successfully"%finished_count.count)
 
 
 
-def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
+def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation):
     try:
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
             metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
@@ -62,7 +77,16 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
             crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
             crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
 
-        page = html.parse(open_bailii_html(fullname))
+        pagetext = open_bailii_html(fullname)
+
+        if do_legislation:
+            legislation_links = []
+            def leglink(t,(l,i)):
+                legislation_links.append((judgmentid,i))
+                return '<a href="%s">%s</a>'%(l,t)
+            pagetext = StringIO(unenumerate(legislation_tree.search_and_replace(compose_normalisers(violently_normalise,remove_html),leglink,iter(pagetext.read()))).encode())
+
+        page = html.parse(pagetext)
         opinion = find_opinion(page)
 
         template = html.parse(html_template_stringio)
@@ -110,9 +134,14 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir):
                     li.append(a)
                     l_out.append(li)
 
-
         outfile = open(os.path.join(output_dir,basename),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
+
+        if legislation_links:
+            with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+                for (j,i) in legislation_links:
+                    cursor.execute('INSERT INTO lawreferences(judgmentid,legislationid) VALUES (?,?)',(j,i))
+
         return (True,report)
     except ConversionError,e:
         return (False,e.message)

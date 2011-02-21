@@ -88,7 +88,7 @@ def remove_html(l):
                 if c == ">":
                     outside = True
 
-    p = PrefixTree().populate([("&amp;","&"),("&lt;","<"),("&gt;",">")])
+    p = PrefixTree().populate(sorted([("&amp;","&"),("&lt;","<"),("&gt;",">"),("&nbsp;"," ")]))
 
     def unentity(l):
         return p.search_and_replace(enumerate, lambda x,y:y, l)
@@ -186,6 +186,7 @@ class PrefixMaster:
                     newstates.append((node,start,end2,val2))
             return newstates
 
+        k = -1
         for (k,c) in normalised:
             states.append((self,k,None,None))
             states = advance_states(c,k,states)

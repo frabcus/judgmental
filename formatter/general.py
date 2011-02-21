@@ -164,3 +164,13 @@ class Counter:
 def broadcast(logfile,message):
     print message
     logfile.write("*** "+message+"\n")
+
+
+
+def make_unique(l, normalise=(lambda x: x)):
+    seen = set()
+    for x in l:
+        y = normalise(x)
+        if y not in seen:
+            seen.add(y)
+            yield x

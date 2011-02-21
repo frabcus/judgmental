@@ -13,6 +13,9 @@ Command-line options:
   --no-convert
        Does not generate any html output
 
+  --no-legislation
+       Does not add links to legislation
+
   --delete-db
        Deletes the database file before starting
 
@@ -50,6 +53,7 @@ use_multiprocessing = multi_enabled # which is defined by general.py
 do_analyse = True
 do_crossreference = True
 do_convert = True
+do_legislation = True
 run_on_all_files = True
 do_delete_db = False
 do_delete_html = False
@@ -69,6 +73,9 @@ while len(arguments)>0:
     elif a == "--no-convert":
         print "Option --no-convert selected"
         do_convert = False
+    elif a == "--no-legislation":
+        print "Option --no-legislation selected"
+        do_legislation = False
     elif a == "--slow":
         print "Option --slow selected"
         use_multiprocessing = False
@@ -129,7 +136,7 @@ with open(logfile_name,'w') as logfile:
     if do_convert:
         conversion_start = time.time()
         start = datetime.now()
-        convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+        convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing,do_legislation=do_legislation)
         elapsed = datetime.now() - start
         broadcast(logfile,"Convert phase took %s"%elapsed)
         if do_delete_html:
