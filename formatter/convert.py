@@ -27,11 +27,7 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do
     if do_legislation:
         print "Making legislation prefix tree"
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            try:
-                cursor.execute('CREATE TABLE lawreferences (lawreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, legislationid INTEGER)')
-            except sqlite.OperationalError:
-                print "FATAL: The law references table already exists. Remove it before running me again."
-                quit()
+            create_tables_interactively(cursor,['lawreferences'],['CREATE TABLE lawreferences (lawreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, legislationid INTEGER)'])
             legislation = sorted(make_unique(((unenumerate(violently_normalise(t)),(l,i)) for (t,l,i) in cursor.execute('SELECT title,link,legislationid FROM legislation')),lambda (x,_):x))
             legislation_tree.populate(legislation)
         print "Added %s names of legislation objects"%len(legislation)
@@ -137,7 +133,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         outfile = open(os.path.join(output_dir,basename),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
 
-        if legislation_links:
+        if do_legislation and legislation_links:
             with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
                 for (j,i) in legislation_links:
                     cursor.execute('INSERT INTO lawreferences(judgmentid,legislationid) VALUES (?,?)',(j,i))
