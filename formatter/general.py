@@ -8,6 +8,7 @@ from cStringIO import StringIO
 # a slightly modified version of UnicodeDammit from BeautifulSoup
 from dammit import UnicodeDammit
 
+import sys
 import os
 
 try:
@@ -89,7 +90,26 @@ class DatabaseManager():
 
 
 
-
+def create_tables_interactively(cursor,names,sqlcode):
+    try:
+        for statement in sqlcode:
+            cursor.execute(statement)
+    except sqlite.OperationalError:
+        while True:
+            print "One or more of the tables called %s already exists; shall I delete it? (Y/N)"%(", ".join(names))
+            l = sys.stdin.readline().strip().upper()
+            if l == "N":
+                print "Then I'll abort."
+                quit()
+            elif l == "Y":
+                for name in names:
+                    try:
+                        cursor.execute("DROP TABLE %s"%name)
+                    except sqlite.OperationalError:
+                        raise
+                for statement in sqlcode:
+                    cursor.execute(statement)
+                break # and a kitkat
 
 
 

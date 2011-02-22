@@ -55,12 +55,7 @@ uritemplate = "http://legislation.data.gov.uk/ukpga/%d/data.feed"
 dbfile = "../../judgmental.db"
 
 with DatabaseManager(dbfile, False) as cursor:
-	# Create table
-	try:
-		cursor.execute('CREATE TABLE legislation (legislationid INTEGER PRIMARY KEY ASC, title TEXT, link TEXT)')
-	except sqlite.OperationalError:
-		print "FATAL: Legislation table already exists; either drop it, or start again generating all metadata from scratch."
-		quit()
+	create_tables_interactively(cursor,['legislation'],['CREATE TABLE legislation (legislationid INTEGER PRIMARY KEY ASC, title TEXT, link TEXT)'])
 
 	for year in range(1801,2011):
 		if verbose: print year

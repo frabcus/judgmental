@@ -64,12 +64,7 @@ def crossreference(file_list, dbfile_name, logfile, use_multiprocessing):
 
 
 def create_table(cursor):
-    try:
-        cursor.execute('CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationid INTEGER)')
-    except sqlite.OperationalError:
-        print "FATAL: Crossreference table already exists; either drop it, or start again generating all metadata from scratch."
-        quit()
-
+    create_tables_interactively(cursor,['crossreferences'],['CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationid INTEGER)'])
 
 
 def crossreference_file(fullname,basename,dbfile_name,use_multiprocessing):
