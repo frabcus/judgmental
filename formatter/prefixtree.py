@@ -14,6 +14,7 @@ There are two concepts we have invented to make the code general.
 
 
 from itertools import tee, islice
+from collections import deque
 
 
 def compose_normalisers(g,f):
@@ -101,6 +102,9 @@ def remove_html(l):
 class PrefixMaster:
     "Base class for prefix trees"
 
+    def __nonzero__(self):
+        return True # we never create empty ones
+
     def __iter__(self):
         return self.prefixiter("")
 
@@ -159,26 +163,25 @@ class PrefixMaster:
             - last match end index in input string (None, if no match made yet)
             - last match value (None, if no match made yet)
         """
-
         (inchars1,inchars2) = tee(iter(l))
         inchars = enumerate(inchars1)
         normalised = p(inchars2)
-        
+
         count = 0
-        states = []
+        states = deque()
 
         def advance_states(c,k,states):
-            newstates = []
+            newstates = deque()
             for (node,start,lastend,lastval) in states:
                 node2 = node.child(c)
                 end2 = (node.content() and k) or lastend
                 val2 = node.content() or lastval
-                if node2 or val2:
+                if node2 is not None or val2:
                     newstates.append((node2,start,end2,val2))
             return newstates
 
         def finalise_states(k,states):
-            newstates = []
+            newstates = deque()
             for (node,start,lastend,lastval) in states:
                 end2 = (node.content() and k) or lastend
                 val2 = node.content() or lastval
@@ -187,6 +190,7 @@ class PrefixMaster:
             return newstates
 
         k = -1
+
         for (k,c) in normalised:
             states.append((self,k,None,None))
             states = advance_states(c,k,states)
@@ -198,11 +202,11 @@ class PrefixMaster:
                 for x in f(unenumerate(islice(inchars,end-start)),val):
                     yield (start,x)
                 count = end
-                states = states[1:]
+                states.popleft()
 
                 # cancel work on matches which clash
                 while len(states)>0 and states[0][1]<end:
-                    states = states[1:]
+                    states.popleft()
 
             # release unmatchable data as unchanged
             if len(states)>0:
@@ -223,11 +227,11 @@ class PrefixMaster:
             for x in f(unenumerate(islice(inchars,start-count,end-count)),val):
                 yield (start,x)
             count = end
-            states = states[1:]
+            states.popleft()
 
             # cancel clashes
             while len(states)>0 and states[0][1]<end:
-                states = states[1:]
+                states.popleft()
 
             # release free text
             if len(states)>0:
@@ -240,6 +244,7 @@ class PrefixMaster:
         # release all remaining text
         for (k2,c2) in inchars:
             yield (k2,c2)
+
 
 
 
@@ -288,6 +293,8 @@ class PrefixTree(PrefixMaster):
         """
         Takes a sorted list of key/value pairs and fills the prefix tree.
         """
+        if len(l)==0:
+            raise ValueError("Can't populate with the emptyset")
 
         def agreement(depth,i,j,c):
             for k in range(i+1,j):

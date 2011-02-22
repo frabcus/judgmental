@@ -6,7 +6,7 @@ from lxml import html, etree
 import re
 import os
 
-from StringIO import StringIO
+from cStringIO import StringIO
 from prefixtree import *
 from general import *
 
@@ -80,7 +80,11 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
             def leglink(t,(l,i)):
                 legislation_links.append((judgmentid,i))
                 return '<a href="%s">%s</a>'%(l,t)
-            pagetext = StringIO(unenumerate(legislation_tree.search_and_replace(compose_normalisers(violently_normalise,remove_html),leglink,iter(pagetext.read()))).encode())
+            newpagetext = StringIO()
+            for (n,c) in legislation_tree.search_and_replace(compose_normalisers(violently_normalise,remove_html),leglink,iter(pagetext.read())):
+                newpagetext.write(c.encode())
+            newpagetext.reset()
+            pagetext = newpagetext
 
         page = html.parse(pagetext)
         opinion = find_opinion(page)
