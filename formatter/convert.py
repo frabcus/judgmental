@@ -41,7 +41,7 @@ def best_filename(year, court_name, citations):
     if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
     	raise StandardConversionError("no good citation")
     
-    return abbreviated_court+"/"+str(year)+"/"+best_name+".html"
+    return abbreviated_court+"/"+str(year)+"/"+name+".html"
 
 def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
 
@@ -158,11 +158,17 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                     li.append(a)
                     l_out.append(li)
 
-        # Choose a name for this judgment
+        # Choose a name for this judgment and record it.
         path = best_filename(dateparse(date).year, court_name, citations)
+        path = os.path.join(output_dir, path)
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+        	os.makedirs(dirname)
 
-        outfile = open(os.path.join(output_dir,basename),'w')
+        outfile = open(path,'w')
         outfile.write(etree.tostring(template, pretty_print=True))
+            with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+            	cursor.execute('UPDATE judgments SET judgmental_url = ? WHERE judgment_id = ?',(path,judgmentid))
 
         if do_legislation and legislation_links:
             with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
