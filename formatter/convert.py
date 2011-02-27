@@ -161,10 +161,14 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         # Choose a name for this judgment and record it.
         path = best_filename(dateparse(date).year, court_name, citations)
         path = os.path.join(output_dir, path)
+        
+        if os.path.exists(path):
+        	raise StandardConversionError("citation collision")
+        
+        # Write out the judgment
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
         	os.makedirs(dirname)
-
         outfile = open(path,'w')
         outfile.write(etree.tostring(template, pretty_print=True))
             with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
