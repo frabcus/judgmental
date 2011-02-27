@@ -54,6 +54,7 @@ do_analyse = True
 do_crossreference = True
 do_convert = True
 do_legislation = True
+do_index = True
 run_on_all_files = True
 do_delete_db = False
 do_delete_html = False
@@ -76,6 +77,9 @@ while len(arguments)>0:
     elif a == "--no-legislation":
         print "Option --no-legislation selected"
         do_legislation = False
+    elif a == "--no-index":
+        print "Option --no-index selected"
+        do_index = False
     elif a == "--slow":
         print "Option --slow selected"
         use_multiprocessing = False
@@ -141,3 +145,12 @@ with open(logfile_name,'w') as logfile:
         broadcast(logfile,"Convert phase took %s"%elapsed)
         if do_delete_html:
             delete_html.delete_html(conversion_start,output_dir)
+
+    # index stage
+    if do_index:
+        start = datetime.now()
+        indexes.make_indexes(dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+        elapsed = datetime.now() - start
+        broadcast(logfile,"Index phase took %s"%elapsed)
+
+
