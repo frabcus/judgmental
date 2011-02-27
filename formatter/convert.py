@@ -5,11 +5,15 @@ Reads file metadata from database and transforms files.
 from lxml import html, etree
 import re
 import os
+import traceback
 
 from cStringIO import StringIO
 from prefixtree import *
 from general import *
+from dateutil.parser import parse as dateparse
 
+import levenshtein
+import courts
 
 legislation_tree = PrefixTree()
 
@@ -18,6 +22,26 @@ legislation_tree = PrefixTree()
 with open("template.html",'r') as html_template_file:
     html_template_stringio = StringIO(html_template_file.read())
 
+def best_filename(year, court_name, citations):
+    """Choose the best name for this judgment from the available citations."""
+    
+    courtname_distances = [(levenshtein.levenshtein(court_name, long), short) for (short, long) in courts.courts]
+    courtname_distances.sort()
+
+    abbreviated_court = courtname_distances[0][1]
+    
+    dummy_citation = "[%d] %s " % (year, abbreviated_court)
+    
+    citation_distances = [(levenshtein.levenshtein(dummy_citation, s, deletion_cost=2,substitution_cost=2), s) for s in citations]
+    citation_distances.sort()
+    
+    (distance, name) = citation_distances[0]
+    
+    #If the distance is too great, complain
+    if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
+    	raise StandardConversionError("no good citation")
+    
+    return abbreviated_court+"/"+str(year)+"/"+best_name+".html"
 
 def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
 
@@ -134,6 +158,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                     li.append(a)
                     l_out.append(li)
 
+        # Choose a name for this judgment
+        path = best_filename(dateparse(date).year, court_name, citations)
+
         outfile = open(os.path.join(output_dir,basename),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
 
@@ -145,6 +172,12 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         return (True,report)
     except ConversionError,e:
         return (False,e.message)
+    except Exception, e:
+        try:
+            message = traceback.format_exc()
+        except:
+            message = "unknown exception"
+        return (False, message)
 
 
 def find_opinion(page):
