@@ -85,7 +85,7 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 		short_name = [short for (short, long) in courts if long == name][0]
 
 		with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-			judgments = list(cursor.execute('SELECT date,judgmentid,title,bailii_url FROM judgments WHERE courtid=? ORDER BY date DESC',(id,)))
+			judgments = list(cursor.execute('SELECT date,judgmentid,title,judgmental_url FROM judgments WHERE courtid=? ORDER BY date DESC',(id,)))
 			print "%d judgments found" % len(judgments)
 			for j in judgments:
 
