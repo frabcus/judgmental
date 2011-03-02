@@ -120,7 +120,7 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
                 case.tail = "\n"
                 year_content_div.append(case)
                 
-        outfile = open(os.path.join(output_dir,short_name+".html"),'w')
+        outfile = open(os.path.join(output_dir,short_name+"/index.html"),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
         return (True,"")
                 
@@ -150,7 +150,7 @@ def make_top_index(output_dir):
         for (short, long) in courts.courts:
             
             case = make_element("div", {"class": "row"}, "")
-            link = make_element("a", {"href": short+".html"}, long)
+            link = make_element("a", {"href": short+"/"}, long)
             case.append(link)
             case.tail = "\n"
             missing_index.append(case)
