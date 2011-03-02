@@ -45,7 +45,7 @@ courts = [
 ("EWCC-Fam", "England and Wales County Court (Family)"),
 ("NIQB", "High Court of Justice in Northern Ireland Queen's Bench Division Decisions"),
 ("NIFam", "High Court of Justice in Northern Ireland Family Division Decisions"),
-("NIMaster", "Northand Ireland High Court of Justice, Master's decisions"),
+("NIMaster", "Northern Ireland High Court of Justice, Master's decisions"),
 ("NICH", "High Court of Justice in Northern Ireland Chancery Division Decisions"),
 ("EWLands", "England and Wales Lands Tribunal"),
 ("EWPCC", "England and Wales Patents County Court"),
@@ -70,4 +70,24 @@ courts = [
 ("UKSSCSC", "UK Social Security and Child Support Commissioners' Decisions"),
 ("UKFTT-TC", "United Kingdom First Tier Tribunal (Tax)"),
 ("UKFTT-HESC", "First-tier Tribunal (Health Education and Social Care Chamber)")]
+
+categories = {
+
+"United Kingdom": ["UKSC", "CAT", "UKPC", "UKVAT", "UKVAT-Customs", "UKVAT-Excise", "UKVAT-Landfill", 
+"UKVAT-IPT", "UKEAT", "UKUT-AAC", "UKUT-LC", "UKUT-TCC-", "DRS", "UKSIAC", 
+"UKSPC", "UKSSCSC", "UKFTT-TC", "UKFTT-HESC","UKHL", "UKIT", "UKFSM", "UKIAT"],
+
+"England and Wales": ["EWCA-Civ", "EWCA-Crim", "EWCST", "EWCC-Fam", "EWLands", "EWPCC", "EWHC-Comm", 
+"EWHC-QB", "EWHC-Admin", "EWHC-Ch", "EWHC-TCC", "EWHC-Pat", "EWHC-Fam", "EWHC-Admlty", 
+"EWHC-Costs", "EWHC-KB", "EWHC-Exch", "EWHC-Mercantile"], 
+
+"Scotland": ["ScotHC", "ScotCS", "ScotSC"], 
+
+"Northern Ireland": ["NICA", "NIFET", "NISSCSC", "NIQB", "NIFam", "NIMaster", "NICH", "NIIT", "NICC"],
+
+"Europe": ["ECHR", "EUECJ"], 
+
+"Republic of Ireland": ["IECCA", "IEHC", "IECA", "IECA-Notice", "IEIC", "IESC", "IEDPC"]
+
+}
 

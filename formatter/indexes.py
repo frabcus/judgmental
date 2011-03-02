@@ -146,14 +146,19 @@ def make_top_index(output_dir):
 
         print "make_top_index"
 
-
-        for (short, long) in courts.courts:
+        for category in ["United Kingdom", "England and Wales", "Scotland", "Northern Ireland",
+        "Republic of Ireland", "Europe"]:
+            header = make_element("h2", {}, category)
+            missing_index.append(header)
             
-            case = make_element("div", {"class": "row"}, "")
-            link = make_element("a", {"href": "/judgments/"+short+"/"}, long)
-            case.append(link)
-            case.tail = "\n"
-            missing_index.append(case)
+            
+            for short in courts.categories[category]:
+                long = [ y for (x,y) in courts.courts if x == short] [0]
+                case = make_element("div", {"class": "row"}, "")
+                link = make_element("a", {"href": "/judgments/"+short+"/"}, long)
+                case.append(link)
+                case.tail = "\n"
+                missing_index.append(case)
 
         print "make_top_index"
                 
