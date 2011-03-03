@@ -130,6 +130,8 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         template.find('//div[@id="meta-date"]').text = date
         template.find('//span[@id="meta-citation"]').text = ", ".join(citations)
         template.find('//div[@id="content"]/h1').text = court_name
+        template.find('//a[@id="bc-courtname"]').text = court_name
+        template.find('//span[@id="bc-description"]').text = title
 
         # add links to crossreferences, or delete the templates for them
         if len(crossreferences_in)==0 and len(crossreferences_out)==0:
