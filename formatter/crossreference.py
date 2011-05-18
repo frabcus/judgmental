@@ -24,7 +24,7 @@ def crossreference(file_list, dbfile_name, logfile, use_multiprocessing):
         create_table(cursor)
 
         print "Making prefix tree"
-        cursor.execute('SELECT citation,citationid FROM citations ORDER BY citation')
+        cursor.execute('SELECT citationcode,citationid FROM citations ORDER BY citationcode')
         sorted_citations = [(a,i) for (a,i) in cursor]
         citationtree.populate(sorted_citations)
         broadcast(logfile,"Read %d citation formats in database"%len(sorted_citations))

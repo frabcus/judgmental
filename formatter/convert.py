@@ -93,8 +93,8 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                 (judgmentid,title,date,court_name,bailii_url) = metadata[0]
             except IndexError:
                 raise NoMetadata
-            citations = list(x[0] for x in cursor.execute('SELECT citation FROM citations WHERE judgmentid=?',(judgmentid,)))
-            crossreferences_out = list(cursor.execute('SELECT citation, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            citations = list(x[0] for x in cursor.execute('SELECT citationcode FROM citations WHERE judgmentid=?',(judgmentid,)))
+            crossreferences_out = list(cursor.execute('SELECT citationcode, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
             crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
 
         pagetext = open_bailii_html(fullname)
