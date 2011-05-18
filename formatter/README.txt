@@ -17,6 +17,9 @@ convert.py
 index.py
   Generates the indexes
 
+disambiguation.py
+  Creates some disambiguation pages
+
 general.py
   Some utility code common to the three phases
 

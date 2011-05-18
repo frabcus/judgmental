@@ -195,3 +195,8 @@ def make_unique(l, normalise=(lambda x: x)):
         if y not in seen:
             seen.add(y)
             yield x
+
+
+
+def disambiguation_filename(citationcode):
+    return "disambiguation_" + citationcode.replace(" ","_") + ".html"
