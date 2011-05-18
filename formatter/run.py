@@ -16,6 +16,9 @@ Command-line options:
   --no-legislation
        Does not add links to legislation
 
+  --no-index
+       Does not run the indexing phase
+
   --delete-db
        Deletes the database file before starting
 

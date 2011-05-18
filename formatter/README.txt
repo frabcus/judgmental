@@ -14,6 +14,9 @@ crossreference.py
 convert.py
   Phase 3: generates neatly-formatted output
 
+index.py
+  Generates the indexes
+
 general.py
   Some utility code common to the three phases
 
