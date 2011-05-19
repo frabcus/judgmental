@@ -95,6 +95,7 @@ def create_tables_interactively(cursor,names,sqlcode):
         for statement in sqlcode:
             cursor.execute(statement)
     except sqlite.OperationalError:
+        raise ####### FOR DEBUGGING ONLY #######
         while True:
             print "One or more of the tables called %s already exists; shall I delete it? (Y/N)"%(", ".join(names))
             l = sys.stdin.readline().strip().upper()
@@ -200,3 +201,5 @@ def make_unique(l, normalise=(lambda x: x)):
 
 def disambiguation_filename(citationcode):
     return "disambiguation_" + citationcode.replace(" ","_") + ".html"
+
+
