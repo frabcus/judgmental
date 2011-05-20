@@ -93,9 +93,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                 (judgmentid,title,date,court_name,bailii_url) = metadata[0]
             except IndexError:
                 raise NoMetadata
-            citations = list(x[0] for x in cursor.execute('SELECT citationcode FROM citations WHERE judgmentid=?',(judgmentid,)))
-            crossreferences_out = list(cursor.execute('SELECT citationcode, title, filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments on citations.judgmentid = judgments.judgmentid where crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
-            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN citations ON crossreferences.citationid=citations.citationid JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid where citations.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            judgmentcitationcodes = list(x[0] for x in cursor.execute('SELECT citationcode FROM judgmentcodes JOIN citationcodes ON judgmentcodes.citationcodeid=citationcodes.citationcodeid WHERE judgmentid=?',(judgmentid,)))
+            crossreferences_out = list(cursor.execute('SELECT citationcode, title, filename FROM crossreferences JOIN citationcodes ON crossreferences.citationcodeid=citationcodes.citationcodeid JOIN judgmentcodes ON crossreferences.citationcodeid = judgmentcodes.citationcodeid JOIN judgments ON judgmentcodes.judgmentid=judgments.judgmentid WHERE crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid JOIN judgmentcodes ON crossreferences.citationcodeid=judgmentcodes.citationcodeid WHERE judgmentcodes.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
 
         pagetext = open_bailii_html(fullname)
 
@@ -128,7 +128,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
 
         template.find('//title').text = title
         template.find('//div[@id="meta-date"]').text = date
-        template.find('//span[@id="meta-citation"]').text = ", ".join(citations)
+        template.find('//span[@id="meta-citation"]').text = ", ".join(judgmentcitationcodes)
         template.find('//div[@id="content"]/h1').text = court_name
 
         # add links to crossreferences, or delete the templates for them
@@ -159,7 +159,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                     l_out.append(li)
 
         # Choose a name for this judgment and record it.
-        path = best_filename(dateparse(date).year, court_name, citations)
+        path = best_filename(dateparse(date).year, court_name, judgmentcitationcodes)
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
             cursor.execute('UPDATE judgments SET judgmental_url = ? WHERE judgmentid = ?',(path,judgmentid))
         path = os.path.join(output_dir, path)
