@@ -20,7 +20,7 @@ def disambiguation(file_list, dbfile_name, logfile, output_dir, use_multiprocess
     print "Disambiguation..."
 
     with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-        ambiguous_citationcodes = list(cursor.execute('SELECT citationcode, GROUP_CONCAT(judgmentid) FROM citations GROUP BY citationcode HAVING COUNT (judgmentid)>1'))
+        ambiguous_citationcodes = list(cursor.execute('SELECT citationcode, GROUP_CONCAT(judgmentid) FROM judgmentcodes JOIN citationcodes ON citationcodes.citationcodeid=judgmentcodes.citationcodeid GROUP BY judgmentcodes.citationcodeid HAVING COUNT (judgmentid)>1'))
     print "Found %d ambiguous codes"%len(ambiguous_citationcodes)
 
     finished_count = Counter()
@@ -45,10 +45,10 @@ def disambiguation(file_list, dbfile_name, logfile, output_dir, use_multiprocess
     print "Creating disambiguation files"
     with ProcessManager(use_multiprocessing) as process_pool:
         for (c,s) in ambiguous_citationcodes:
-            process_pool.apply_async(disambiguate,(c,s,output_dir),callback=disambiguate_report(c))
+            process_pool.apply_async(disambiguate,(c,s,output_dir,dbfile_name,use_multiprocessing),callback=disambiguate_report(c))
 
 
-def disambiguate(code,judgmentids_string,output_dir):
+def disambiguate(code,judgmentids_string,output_dir,dbfile_name,use_multiprocessing):
     judgmentids = judgmentids_string.split(",")
     try:
 
@@ -60,9 +60,13 @@ def disambiguate(code,judgmentids_string,output_dir):
         possibilities = []
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
             for j in judgmentids:
-                cursor.execute('SELECT title, judgmentalurl FROM judgments WHERE judgmentid = *',(judgmentid,))
-                possibilities.append(cursor.fetchone())
+                cursor.execute('SELECT title, judgmental_url FROM judgments WHERE judgmentid = ? AND judgmental_url IS NOT NULL ORDER BY date DESC',(j,))
+                result = cursor.fetchone()
+                if result:
+                    possibilities.append(result)
 
+        if len(possibilities) == 0:
+            raise StandardConversionError("no judgmental_urls found for citationcode")
         for (t,u) in possibilities:
             li = etree.Element("li")
             a = etree.Element("a")

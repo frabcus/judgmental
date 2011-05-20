@@ -10,6 +10,7 @@ from dammit import UnicodeDammit
 
 import sys
 import os
+import traceback
 
 try:
     import sqlite3 as sqlite
@@ -199,6 +200,6 @@ def make_unique(l, normalise=(lambda x: x)):
 
 
 def disambiguation_filename(citationcode):
-    return "disambiguation_" + citationcode.replace(" ","_") + ".html"
+    return "disambiguation_" + citationcode.replace(" ","_").replace("/","__") + ".html"
 
 
