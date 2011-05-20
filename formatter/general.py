@@ -148,7 +148,8 @@ def open_bailii_html(filename, salvage_bad_pages = True):
     if start == -1:
         raise StandardConversionError("There is no HTML in this file")
     page = a[start:].replace('\r\n','\n')
-    page = page.translate(string.maketrans('\r','\n'), '\x0c')
+    controlcodes='\x01\x02\x03\x05\x06\x07\x08\x0b\x0c\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f'
+    page = page.translate(string.maketrans('\r','\n'), controlcodes)
     return StringIO(page)
 
 
@@ -194,3 +195,10 @@ def make_unique(l, normalise=(lambda x: x)):
         if y not in seen:
             seen.add(y)
             yield x
+
+
+
+def disambiguation_filename(citationcode):
+    return "disambiguation_" + citationcode.replace(" ","_") + ".html"
+
+

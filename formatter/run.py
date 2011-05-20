@@ -16,6 +16,12 @@ Command-line options:
   --no-legislation
        Does not add links to legislation
 
+  --no-index
+       Does not run the indexing phase
+
+  --no-disambiguation
+       Does not run the disambiguation phase
+
   --delete-db
        Deletes the database file before starting
 
@@ -37,6 +43,7 @@ from datetime import datetime
 import analyse
 import crossreference
 import convert
+import disambiguation
 import indexes
 import delete_html
 from general import *
@@ -56,6 +63,7 @@ do_crossreference = True
 do_convert = True
 do_legislation = True
 do_index = True
+do_disambiguation = True
 run_on_all_files = True
 do_delete_db = False
 do_delete_html = False
@@ -81,6 +89,9 @@ while len(arguments)>0:
     elif a == "--no-index":
         print "Option --no-index selected"
         do_index = False
+    elif a == "--no-disambiguation":
+        print "Option --no-disambiguation selected"
+        do_disambiguation = False
     elif a == "--slow":
         print "Option --slow selected"
         use_multiprocessing = False
@@ -146,6 +157,14 @@ with open(logfile_name,'w') as logfile:
         broadcast(logfile,"Convert phase took %s"%elapsed)
         if do_delete_html:
             delete_html.delete_html(conversion_start,output_dir)
+
+    # disambiguation stage
+    if do_disambiguation:
+        disambiguation_start = time.time()
+        start = datetime.now()
+        disambiguation.disambiguation(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+        elapsed = datetime.now() - start
+        broadcast(logfile,"Disambiguation phase took %s"%elapsed)
 
     # index stage
     if do_index:
