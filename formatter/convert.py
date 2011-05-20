@@ -161,7 +161,20 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         # Choose a name for this judgment and record it.
         path = best_filename(dateparse(date).year, court_name, judgmentcitationcodes)
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            cursor.execute('UPDATE judgments SET judgmental_url = ? WHERE judgmentid = ?',(path,judgmentid))
+            duplicate_number = 1
+            while True:
+                try:
+                    cursor.execute('UPDATE judgments SET judgmental_url = ? WHERE judgmentid = ?',(path,judgmentid))
+                    break
+                except sqlite.IntegrityError:
+                    if duplicate_number > 1000000: # Something's very wrong!
+                        raise
+                    if duplicate_number == 1:
+                        path = path[:len(path)-5]
+                    else:
+                        path = path[:len(path)-5-len(str(duplicate_number))-1]
+                    duplicate_number += 1
+                    path += '_' + str(duplicate_number) + '.html'
         path = os.path.join(output_dir, path)
                 
         # Write out the judgment
