@@ -51,7 +51,7 @@ def create_tables(cursor):
     "Create tables in an SQL database"
     s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)',
          'CREATE TABLE citationcodes (citationcodeid INTEGER PRIMARY KEY ASC, citationcode TEXT)',
-         'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER)',
+         'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER, judgmentid INTEGER)',
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
          'CREATE TABLE parties (partyid INTEGER PRIMARY KEY ASC, name TEXT, position INTEGER, judgmentid INTEGER)']
     create_tables_interactively(cursor,['courts','citationcodes','judgmentcodes','judgments','parties'],s)
@@ -101,7 +101,7 @@ def write_metadata_to_sql(d,cursor):
         if result:
             i = result[0]
         else:
-            cursor.execute('INSERT INTO citationcodes(name) VALUES (?)', (c,))
+            cursor.execute('INSERT INTO citationcodes(citationcode) VALUES (?)', (c,))
             i = cursor.lastrowid
         cursor.execute('INSERT INTO judgmentcodes(citationcodeid, judgmentid) VALUES (?, ?)', (i,judgmentid))
 
