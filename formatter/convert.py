@@ -41,7 +41,7 @@ def best_filename(year, court_name, citations):
     if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
     	raise StandardConversionError("no good citation")
     
-    return abbreviated_court+"/"+str(year)+"/"+name+".html"
+    return abbreviated_court+"/"+str(year)+"/"+name.replace('/','__')+".html"
 
 def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
 

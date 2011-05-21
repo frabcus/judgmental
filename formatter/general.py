@@ -200,6 +200,6 @@ def make_unique(l, normalise=(lambda x: x)):
 
 
 def disambiguation_filename(citationcode):
-    return "disambiguation_" + citationcode.replace(" ","_").replace("/","__") + ".html"
+    return "disambiguation_" + citationcode.replace("/","__") + ".html"
 
 
