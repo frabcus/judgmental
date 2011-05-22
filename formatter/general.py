@@ -95,22 +95,26 @@ def create_tables_interactively(cursor,names,sqlcode):
     try:
         for statement in sqlcode:
             cursor.execute(statement)
-    except sqlite.OperationalError:
-        while True:
-            print "One or more of the tables called %s already exists; shall I delete it? (Y/N)"%(", ".join(names))
-            l = sys.stdin.readline().strip().upper()
-            if l == "N":
-                print "Then I'll abort."
-                quit()
-            elif l == "Y":
-                for name in names:
-                    try:
-                        cursor.execute("DROP TABLE %s"%name)
-                    except sqlite.OperationalError:
-                        raise
-                for statement in sqlcode:
-                    cursor.execute(statement)
-                break # and a kitkat
+    except sqlite.OperationalError, e:
+        if str(e)[-14:] == "already exists":
+            while True:
+                print "One or more of the tables called %s already exists; shall I delete it? (Y/N)"%(", ".join(names))
+                l = sys.stdin.readline().strip().upper()
+                if l == "N":
+                    print "Then I'll abort."
+                    quit()
+                elif l == "Y":
+                    for name in names:
+                        try:
+                            cursor.execute("DROP TABLE %s"%name)
+                        except sqlite.OperationalError, e2:
+                            if "on such table" not in str(e2):
+                                raise
+                    for statement in sqlcode:
+                        cursor.execute(statement)
+                    break # and a kitkat
+        else:
+            raise
 
 
 
