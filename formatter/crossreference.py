@@ -72,7 +72,7 @@ def crossreference_file(fullname,basename,dbfile_name,use_multiprocessing):
     try:
         f = open_bailii_html(fullname)
         citationset = set()
-        for (_,v) in citationtree.search(prefixtree.compose_normalisers(prefixtree.remove_excess_spaces,prefixtree.remove_html),f.read()):
+        for (_,v) in citationtree.search(reduce(prefixtree.compose_normalisers,[prefixtree.remove_excess_spaces,prefixtree.remove_html,prefixtree.character_removing_normaliser(".'")]),f.read()):
             citationset.add(v)
         return (True,citationset)
     except ConversionError, e:

@@ -57,7 +57,13 @@ def violently_normalise(l):
         if c.isalnum():
             yield (n,c.lower())
 
-
+def character_removing_normaliser(charset):
+    "Returns a normaliser that removes a given iterable of characters"
+    def normaliser(l):
+        for (n,c) in enumerate(l):
+            if not c in charset:
+                yield (n,c)
+    return normaliser
 
 def remove_excess_spaces(l):
     "Replace multiple spaces with a single space"
