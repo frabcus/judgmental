@@ -21,7 +21,7 @@ courts = [
 ("UKEAT", "United Kingdom Employment Appeal Tribunal"),
 ("UKUT-AAC", "Upper Tribunal (Administrative Appeals Chamber)"),
 ("UKUT-LC", "United Kingdom Upper Tribunal (Lands Chamber)"),
-("UKUT-TCC-", "United Kingdom Upper Tribunal (Finance and Tax)"),
+("UKUT-TCC", "United Kingdom Upper Tribunal (Finance and Tax)"),
 ("DRS", "Nominet UK Dispute Resolution Service"),
 ("UKSIAC", "Special Immigrations Appeals Commission"),
 ("ScotHC", "Scottish High Court of Justiciary Decisons"),
