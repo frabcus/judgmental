@@ -120,6 +120,9 @@ def write_metadata_to_sql(d,cursor):
             pass
     judgmentid = cursor.lastrowid
 
+    # weakly normalise the citations
+    d["citations"] = set(re.sub('  +', ' ',i).replace('.','').replace("'","") for i in d["citations"])
+
     # store the citations
     for c in d["citations"]:
         cursor.execute('SELECT citationcodeid FROM citationcodes WHERE citationcode = ?', (c,))
