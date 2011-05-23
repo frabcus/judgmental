@@ -12,9 +12,6 @@ from prefixtree import *
 from general import *
 from dateutil.parser import parse as dateparse
 
-import levenshtein
-import courts
-
 legislation_tree = PrefixTree()
 
 
@@ -22,26 +19,6 @@ legislation_tree = PrefixTree()
 with open("template.html",'r') as html_template_file:
     html_template_stringio = StringIO(html_template_file.read())
 
-def best_filename(year, court_name, citations):
-    """Choose the best name for this judgment from the available citations."""
-    
-    courtname_distances = [(levenshtein.levenshtein(court_name, long), short) for (short, long) in courts.courts]
-    courtname_distances.sort()
-
-    abbreviated_court = courtname_distances[0][1]
-    
-    dummy_citation = "[%d] %s " % (year, abbreviated_court)
-    
-    citation_distances = [(levenshtein.levenshtein(dummy_citation, s, deletion_cost=2,substitution_cost=2), s) for s in citations]
-    citation_distances.sort()
-    
-    (distance, name) = citation_distances[0]
-    
-    #If the distance is too great, complain
-    if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
-    	raise StandardConversionError("no good citation")
-    
-    return abbreviated_court+"/"+str(year)+"/"+name.replace('/','__')+".html"
 
 def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
 
@@ -88,9 +65,9 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do
 def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation):
     try:
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
+            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url,judgmental_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
             try:
-                (judgmentid,title,date,court_name,bailii_url) = metadata[0]
+                (judgmentid,title,date,court_name,bailii_url,judgmental_url) = metadata[0]
             except IndexError:
                 raise NoMetadata
             judgmentcitationcodes = list(x[0] for x in cursor.execute('SELECT citationcode FROM judgmentcodes JOIN citationcodes ON judgmentcodes.citationcodeid=citationcodes.citationcodeid WHERE judgmentid=?',(judgmentid,)))
@@ -160,24 +137,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                     li.append(a)
                     l_out.append(li)
 
-        # Choose a name for this judgment and record it.
-        path = best_filename(dateparse(date).year, court_name, judgmentcitationcodes)
-        with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            duplicate_number = 1
-            while True:
-                try:
-                    cursor.execute('UPDATE judgments SET judgmental_url = ? WHERE judgmentid = ?',(path,judgmentid))
-                    break
-                except sqlite.IntegrityError:
-                    if duplicate_number > 1000000: # Something's very wrong!
-                        raise
-                    if duplicate_number == 1:
-                        path = path[:len(path)-5]
-                    else:
-                        path = path[:len(path)-5-len(str(duplicate_number))-1]
-                    duplicate_number += 1
-                    path += '_' + str(duplicate_number) + '.html'
-        path = os.path.join(output_dir, path)
+        path = os.path.join(output_dir, judgmental_url)
                 
         # Write out the judgment
         dirname = os.path.dirname(path)

@@ -6,6 +6,8 @@ from dateutil.parser import parse as dateparse
 from lxml import html, etree
 import re
 import os
+import levenshtein
+import courts
 
 from general import *
 
@@ -46,6 +48,27 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
 
+def best_filename(year, court_name, citations):
+    """Choose the best name for this judgment from the available citations. Is a generator, returning alternative versions."""
+    
+    abbreviated_court = min((levenshtein.levenshtein(court_name, long), short) for (short, long) in courts.courts)[1]
+
+    dummy_citation = "[%d] %s " % (year, abbreviated_court)
+    
+    (distance, name) = min((levenshtein.levenshtein(dummy_citation, s, deletion_cost=2,substitution_cost=2), s) for s in citations)
+    
+    #If the distance is too great, complain
+    if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
+    	raise StandardConversionError("no good citation")
+    
+    basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace('/','__')
+
+    yield basic_name + ".html"
+    c = 1
+    while True:
+        yield basic_name + "_%d"%c + ".html"
+        c += 1
+
 
 def create_tables(cursor):
     "Create tables in an SQL database"
@@ -55,7 +78,6 @@ def create_tables(cursor):
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
          'CREATE TABLE parties (partyid INTEGER PRIMARY KEY ASC, name TEXT, position INTEGER, judgmentid INTEGER)']
     create_tables_interactively(cursor,['courts','citationcodes','judgmentcodes','judgments','parties'],s)
-
 
 
 def analyse_file(filename,dbfile_name,use_multiprocessing):
@@ -68,13 +90,12 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         metadata["title"] = title = re.sub('  +', ' ',extract(page,"//title").replace('\n', ' '))
         metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
         metadata["citations"] = find_citations(page,title)
-        metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
+        metadata["court_name"] = court_name = extract(page,'//td[@align="left"]/h1')
         metadata["date"] = find_date(page,titletag,title)
         metadata["parties"] = parties_from_title(title)
         return (True,metadata)
     except ConversionError, e:
         return (False,e.message)
-
 
 
 def write_metadata_to_sql(d,cursor):
@@ -91,7 +112,12 @@ def write_metadata_to_sql(d,cursor):
         courtid = cursor.lastrowid
 
     # insert a record
-    cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url) VALUES (?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"]))
+    for judgmental_url in best_filename(d["date"].year, d["court_name"], d["citations"]):
+        try:
+            cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url, judgmental_url) VALUES (?, ?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"], judgmental_url))
+            break
+        except sqlite.IntegrityError:
+            pass
     judgmentid = cursor.lastrowid
 
     # store the citations
