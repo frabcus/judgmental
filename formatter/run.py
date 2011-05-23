@@ -108,7 +108,7 @@ while len(arguments)>0:
             file_list.append(arguments[0])
             arguments = arguments[1:]
     else:
-        print "FATAL: I don't understand those command-line arguments"
+        print "FATAL: I don't understand the command-line argument %s"%a
         quit()
 
 # one argument combination is stupid
