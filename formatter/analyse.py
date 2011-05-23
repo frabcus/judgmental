@@ -64,10 +64,9 @@ def best_filename(year, court_name, citations):
     basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace('/','__')
 
     yield basic_name + ".html"
-    c = 1
-    while True:
+    for c in range(1,100):
         yield basic_name + "_%d"%c + ".html"
-        c += 1
+    raise StandardConversionError("something's going wrong: we can't give this a filename")
 
 
 def create_tables(cursor):

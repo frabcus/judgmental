@@ -31,6 +31,9 @@ Command-line options:
   --slow
        Refuses to use multiprocessing
 
+  --profile
+       Runs the Python C profiler
+
   --files
        Works only on the files which follow
 """
@@ -67,6 +70,7 @@ do_disambiguation = True
 run_on_all_files = True
 do_delete_db = False
 do_delete_html = False
+profiling = False
 file_list = []
 
 # parse command-line options
@@ -101,6 +105,9 @@ while len(arguments)>0:
     elif a == "--delete-db":
         print "Option --delete-db selected"
         do_delete_db = True
+    elif a == "--profile":
+        print "Option --profile selected"
+        profiling = True
     elif a == "--files":
         print "Using file list supplied"
         run_on_all_files = False
@@ -108,7 +115,7 @@ while len(arguments)>0:
             file_list.append(arguments[0])
             arguments = arguments[1:]
     else:
-        print "FATAL: I don't understand those command-line arguments"
+        print "FATAL: I don't understand the command-line argument %s"%a
         quit()
 
 # one argument combination is stupid
@@ -124,53 +131,59 @@ if run_on_all_files:
             if f[-5:] == ".html":
                 file_list.append(os.path.join(path,f))
 
-# open logfile
-with open(logfile_name,'w') as logfile:
+def do_the_business():
+    # open logfile
+    with open(logfile_name,'w') as logfile:
 
-    # some details
-    broadcast(logfile,"File list contains %d files"%len(file_list))
+        # some details
+        broadcast(logfile,"File list contains %d files"%len(file_list))
 
-    # delete the database
-    if do_delete_db:
-        os.remove(dbfile_name)
+        # delete the database
+        if do_delete_db:
+            os.remove(dbfile_name)
 
-    # analysis stage
-    if do_analyse:
-        start = datetime.now()
-        analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
-        elapsed = datetime.now() - start
-        broadcast(logfile,"Analyse phase took %s"%elapsed)
+        # analysis stage
+        if do_analyse:
+            start = datetime.now()
+            analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+            elapsed = datetime.now() - start
+            broadcast(logfile,"Analyse phase took %s"%elapsed)
 
-    # crossreference stage
-    if do_crossreference:
-        start = datetime.now()
-        crossreference.crossreference(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
-        elapsed = datetime.now() - start
-        broadcast(logfile,"Crossreference phase took %s"%elapsed)
+        # crossreference stage
+        if do_crossreference:
+            start = datetime.now()
+            crossreference.crossreference(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+            elapsed = datetime.now() - start
+            broadcast(logfile,"Crossreference phase took %s"%elapsed)
 
-    # convert stage
-    if do_convert:
-        conversion_start = time.time()
-        start = datetime.now()
-        convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing,do_legislation=do_legislation)
-        elapsed = datetime.now() - start
-        broadcast(logfile,"Convert phase took %s"%elapsed)
-        if do_delete_html:
-            delete_html.delete_html(conversion_start,output_dir)
+        # convert stage
+        if do_convert:
+            conversion_start = time.time()
+            start = datetime.now()
+            convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing,do_legislation=do_legislation)
+            elapsed = datetime.now() - start
+            broadcast(logfile,"Convert phase took %s"%elapsed)
+            if do_delete_html:
+                delete_html.delete_html(conversion_start,output_dir)
 
-    # disambiguation stage
-    if do_disambiguation:
-        disambiguation_start = time.time()
-        start = datetime.now()
-        disambiguation.disambiguation(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
-        elapsed = datetime.now() - start
-        broadcast(logfile,"Disambiguation phase took %s"%elapsed)
+        # disambiguation stage
+        if do_disambiguation:
+            disambiguation_start = time.time()
+            start = datetime.now()
+            disambiguation.disambiguation(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+            elapsed = datetime.now() - start
+            broadcast(logfile,"Disambiguation phase took %s"%elapsed)
 
-    # index stage
-    if do_index:
-        start = datetime.now()
-        indexes.make_indexes(dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
-        elapsed = datetime.now() - start
-        broadcast(logfile,"Index phase took %s"%elapsed)
+        # index stage
+        if do_index:
+            start = datetime.now()
+            indexes.make_indexes(dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing)
+            elapsed = datetime.now() - start
+            broadcast(logfile,"Index phase took %s"%elapsed)
 
 
+if profiling:
+    import cProfile
+    cProfile.run("do_the_business()")
+else:
+    do_the_business()
