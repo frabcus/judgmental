@@ -86,7 +86,9 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         titletag = page.find("//title") 
         metadata["title"] = title = re.sub('  +', ' ',extract(page,"//title").replace('\n', ' '))
         metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
-        metadata["citations"] = find_citations(page,title)
+        citations = find_citations(page,title)
+        # weakly normalise the citations
+        metadata["citations"] = set(re.sub('  +', ' ',i).replace('.','').replace("'","") for i in citations)
         court_name = extract(page,'//td[@align="left"]/h1')
         metadata["abbreviated_court"],metadata["court_name"] = min((levenshtein.levenshtein(court_name, long), short, long) for (short, long) in courts.courts)[1:]
         metadata["date"] = find_date(page,titletag,title)
@@ -116,9 +118,6 @@ def write_metadata_to_sql(d,cursor):
         except sqlite.IntegrityError:
             pass
     judgmentid = cursor.lastrowid
-
-    # weakly normalise the citations
-    d["citations"] = set(re.sub('  +', ' ',i).replace('.','').replace("'","") for i in d["citations"])
 
     # store the citations
     for c in d["citations"]:
