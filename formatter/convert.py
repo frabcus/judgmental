@@ -65,9 +65,9 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do
 def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation):
     try:
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,bailii_url,judgmental_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
+            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,courts.abbreviated_name,bailii_url,judgmental_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
             try:
-                (judgmentid,title,date,court_name,bailii_url,judgmental_url) = metadata[0]
+                (judgmentid,title,date,court_name,abbreviated_court,bailii_url,judgmental_url) = metadata[0]
             except IndexError:
                 raise NoMetadata
             judgmentcitationcodes = list(x[0] for x in cursor.execute('SELECT citationcode FROM judgmentcodes JOIN citationcodes ON judgmentcodes.citationcodeid=citationcodes.citationcodeid WHERE judgmentid=?',(judgmentid,)))
@@ -108,6 +108,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         template.find('//span[@id="meta-citation"]').text = ", ".join(judgmentcitationcodes)
         template.find('//div[@id="content"]/h1').text = court_name
         template.find('//a[@id="bc-courtname"]').text = court_name
+        template.find('//a[@id="bc-courtname"]').set('href','/judgments/'+abbreviated_court+'/')
         template.find('//span[@id="bc-description"]').text = title
 
         # add links to crossreferences, or delete the templates for them
