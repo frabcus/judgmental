@@ -57,7 +57,7 @@ def best_filename(year, abbreviated_court, citations):
     
     #If the distance is too great, complain
     if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
-    	raise StandardConversionError("no good citation")
+    	raise StandardConversionError("Could not assign a filename. Dummy citation is '%s'; closest actual citation is '%s', with distance %d"%(dummy_citation,name,distance))
     
     basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace(' ','_').replace('/','__')
 
