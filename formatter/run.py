@@ -55,9 +55,9 @@ from general import *
 # standard filenames
 file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 input_dir = os.path.join(file_dir, "../../bailii")
-output_dir = os.path.join(file_dir, "../../public_html/judgments")
+output_dir = os.path.join(file_dir, "../../public_html_nonlive/judgments")
 logfile_name = os.path.join(file_dir, "../../errors.log")
-dbfile_name = os.path.join(file_dir, "../../judgmental.db")
+dbfile_name = os.path.join(file_dir, "../../judgmental_nonlive.db")
 
 # default options
 use_multiprocessing = multi_enabled # which is defined by general.py
