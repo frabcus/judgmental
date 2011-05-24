@@ -48,10 +48,8 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
 
-def best_filename(year, court_name, citations):
+def best_filename(year, abbreviated_court, citations):
     """Choose the best name for this judgment from the available citations. Is a generator, returning alternative versions."""
-    
-    abbreviated_court = min((levenshtein.levenshtein(court_name, long), short) for (short, long) in courts.courts)[1]
 
     dummy_citation = "[%d] %s " % (year, abbreviated_court)
     
@@ -71,7 +69,7 @@ def best_filename(year, court_name, citations):
 
 def create_tables(cursor):
     "Create tables in an SQL database"
-    s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)',
+    s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, abbreviated_name TEXT UNIQUE)',
          'CREATE TABLE citationcodes (citationcodeid INTEGER PRIMARY KEY ASC, citationcode TEXT UNIQUE)',
          'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER, judgmentid INTEGER)',
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
@@ -89,7 +87,8 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         metadata["title"] = title = re.sub('  +', ' ',extract(page,"//title").replace('\n', ' '))
         metadata["bailii_url"] = extract(page,'//small/i') # should get this by other means?
         metadata["citations"] = find_citations(page,title)
-        metadata["court_name"] = court_name = extract(page,'//td[@align="left"]/h1')
+        court_name = extract(page,'//td[@align="left"]/h1')
+        metadata["abbreviated_court"],metadata["court_name"] = min((levenshtein.levenshtein(court_name, long), short, long) for (short, long) in courts.courts)[1:]
         metadata["date"] = find_date(page,titletag,title)
         metadata["parties"] = parties_from_title(title)
         return (True,metadata)
@@ -101,17 +100,16 @@ def write_metadata_to_sql(d,cursor):
     "Inserts judgment metadata to SQL database"
 
     # make sure there's a unique identifier for the court
-    court_name = d["court_name"]
-    cursor.execute('SELECT courtid FROM courts WHERE name = ?', (court_name,))
+    cursor.execute('SELECT courtid FROM courts WHERE abbreviated_name = ?', (d["abbreviated_court"],))
     result = cursor.fetchone()
     if result:
         courtid = result[0]
     else:
-        cursor.execute('INSERT INTO courts(name) VALUES (?)', (court_name,))
+        cursor.execute('INSERT INTO courts(name, abbreviated_name) VALUES (?,?)', (d["court_name"],d["abbreviated_court"]))
         courtid = cursor.lastrowid
 
     # insert a record
-    for judgmental_url in best_filename(d["date"].year, d["court_name"], d["citations"]):
+    for judgmental_url in best_filename(d["date"].year, d["abbreviated_court"], d["citations"]):
         try:
             cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url, judgmental_url) VALUES (?, ?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"], judgmental_url))
             break
