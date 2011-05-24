@@ -54,11 +54,7 @@ def best_filename(year, abbreviated_court, citations):
     dummy_citation = "[%d] %s " % (year, abbreviated_court)
     
     (distance, name) = min((levenshtein.levenshtein(dummy_citation, s, deletion_cost=2,substitution_cost=2), s) for s in citations)
-    
-    #If the distance is too great, complain
-    if len(name) < len(dummy_citation):
-    	raise StandardConversionError("Could not assign a filename. Dummy citation is '%s'; closest actual citation is '%s', with distance %d"%(dummy_citation,name,distance))
-    
+  
     basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace(' ','_').replace('/','__')
 
     yield basic_name + ".html"
