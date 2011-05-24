@@ -59,7 +59,7 @@ def best_filename(year, abbreviated_court, citations):
     if len(name) < len(dummy_citation) or distance > 2*(len(name) - len(dummy_citation)):
     	raise StandardConversionError("no good citation")
     
-    basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace('/','__')
+    basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace(' ','_').replace('/','__')
 
     yield basic_name + ".html"
     for c in range(1,100):
