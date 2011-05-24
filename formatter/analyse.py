@@ -89,8 +89,7 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         citations = find_citations(page,title)
         # weakly normalise the citations
         metadata["citations"] = set(re.sub('  +', ' ',i).replace('.','').replace("'","") for i in citations)
-        court_name = extract(page,'//td[@align="left"]/h1')
-        metadata["abbreviated_court"],metadata["court_name"] = min((levenshtein.levenshtein(court_name, long), short, long) for (short, long) in courts.courts)[1:]
+        metadata["court_name"] = extract(page,'//td[@align="left"]/h1')
         metadata["date"] = find_date(page,titletag,title)
         metadata["parties"] = parties_from_title(title)
         return (True,metadata)
@@ -101,17 +100,25 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
 def write_metadata_to_sql(d,cursor):
     "Inserts judgment metadata to SQL database"
 
-    # make sure there's a unique identifier for the court
-    cursor.execute('SELECT courtid FROM courts WHERE abbreviated_name = ?', (d["abbreviated_court"],))
-    result = cursor.fetchone()
+    # make sure there's a record for the court
+    def get_court(court_name):
+        cursor.execute('SELECT courtid,abbreviated_name FROM courts WHERE name = ?', (court_name,))
+        result = cursor.fetchone()
+        return result
+
+    result = get_court(d["court_name"])
+    if not result:
+        abbreviated_court,d["court_name"] = min((levenshtein.levenshtein(d["court_name"], long), short, long) for (short, long) in courts.courts)[1:]
+        result = get_court(d["court_name"])
+
     if result:
-        courtid = result[0]
+        (courtid,abbreviated_court) = result
     else:
-        cursor.execute('INSERT INTO courts(name, abbreviated_name) VALUES (?,?)', (d["court_name"],d["abbreviated_court"]))
+        cursor.execute('INSERT INTO courts(name, abbreviated_name) VALUES (?,?)', (d["court_name"],abbreviated_court))
         courtid = cursor.lastrowid
 
     # insert a record
-    for judgmental_url in best_filename(d["date"].year, d["abbreviated_court"], d["citations"]):
+    for judgmental_url in best_filename(d["date"].year, abbreviated_court, d["citations"]):
         try:
             cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url, judgmental_url) VALUES (?, ?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"], judgmental_url))
             break
