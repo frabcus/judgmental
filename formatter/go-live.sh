@@ -6,4 +6,4 @@ echo "Copying to judgmental.db"
 cp -f ../../judgmental_nonlive.db ../../judgmental.db
 
 echo "Copying to public_html"
-rsync -ru --delete ../../public_html_nonlive ../../public_html_live
+rsync -ru --delete ../../public_html_nonlive ../../public_html
