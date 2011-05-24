@@ -38,14 +38,14 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do
     def convert_report(basename):
         "Callback function; reports on success or failure"
         def closure(r):
-            "Take True and a list of report strings, or false and a message"
-            (s,x) = r
+            "Take True, new file name and a list of report strings, or False, None and a message"
+            (s,newname,x) = r
             try:
                 if s:
                     finished_count.inc()
                     if len(x)>0:
-                        logfile.write("[convert success] " + basename + " (" + ", ".join(x) + ")" + "\n")
-                    print "convert:%6d. %s"%(finished_count.count, basename)
+                        logfile.write("[convert success] " + basename + " -> " + newname + " (" + ", ".join(x) + ")" + "\n")
+                    print "convert:%6d. %s"%(finished_count.count, basename + " -> " + newname)
                 else:
                     raise StandardConversionError(x)
             except ConversionError, e:
@@ -152,15 +152,15 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                 for (j,i) in legislation_links:
                     cursor.execute('INSERT INTO lawreferences(judgmentid,legislationid) VALUES (?,?)',(j,i))
 
-        return (True,report)
+        return (True, judgmental_url, report)
     except ConversionError,e:
-        return (False,e.message)
+        return (False, None, e.message)
     except Exception, e:
         try:
             message = traceback.format_exc()
         except:
             message = "unknown exception"
-        return (False, message)
+        return (False, None, message)
 
 
 def find_opinion(page):
