@@ -204,6 +204,6 @@ def make_unique(l, normalise=(lambda x: x)):
 
 
 def disambiguation_filename(citationcode):
+    "Some citation codes are claimed by more than one judgment. This is a canonical filename for a disambiguation page which offers links to all such judgments."
     return "disambiguation_" + citationcode.replace(' ','_').replace("/","__") + ".html"
-
 
