@@ -71,8 +71,8 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
             except IndexError:
                 raise NoMetadata
             judgmentcitationcodes = list(x[0] for x in cursor.execute('SELECT citationcode FROM judgmentcodes JOIN citationcodes ON judgmentcodes.citationcodeid=citationcodes.citationcodeid WHERE judgmentid=?',(judgmentid,)))
-            crossreferences_out = list(cursor.execute('SELECT citationcode, title, filename FROM crossreferences JOIN citationcodes ON crossreferences.citationcodeid=citationcodes.citationcodeid JOIN judgmentcodes ON crossreferences.citationcodeid = judgmentcodes.citationcodeid JOIN judgments ON judgmentcodes.judgmentid=judgments.judgmentid WHERE crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
-            crossreferences_in = list(cursor.execute('SELECT title,filename FROM crossreferences JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid JOIN judgmentcodes ON crossreferences.citationcodeid=judgmentcodes.citationcodeid WHERE judgmentcodes.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            crossreferences_out = list(cursor.execute('SELECT citationcode, title, judgmental_url FROM crossreferences JOIN citationcodes ON crossreferences.citationcodeid=citationcodes.citationcodeid JOIN judgmentcodes ON crossreferences.citationcodeid = judgmentcodes.citationcodeid JOIN judgments ON judgmentcodes.judgmentid=judgments.judgmentid WHERE crossreferences.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
+            crossreferences_in = list(cursor.execute('SELECT title,judgmental_url FROM crossreferences JOIN judgments ON crossreferences.judgmentid=judgments.judgmentid JOIN judgmentcodes ON crossreferences.citationcodeid=judgmentcodes.citationcodeid WHERE judgmentcodes.judgmentid=? ORDER BY judgments.date',(judgmentid,)))
 
         pagetext = open_bailii_html(fullname)
 
