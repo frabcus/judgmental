@@ -65,14 +65,15 @@ def best_filename(year, abbreviated_court, court_url, citations):
 
 def create_tables(cursor):
     "Create tables in an SQL database"
-    s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, abbreviated_name TEXT UNIQUE, url TEXT)',
+    s = ['CREATE TABLE courtcategories (courtcategoryid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE)',
+         'CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, courtcategoryid INTEGER, abbreviated_name TEXT UNIQUE, url TEXT UNIQUE)',
          'CREATE TABLE citationcodes (citationcodeid INTEGER PRIMARY KEY ASC, citationcode TEXT UNIQUE)',
          'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER, judgmentid INTEGER)',
          'CREATE INDEX judgmentcodes_judgmentid ON judgmentcodes (judgmentid)',
          'CREATE INDEX judgmentcodes_citationcodeid ON judgmentcodes (citationcodeid)',
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
          'CREATE TABLE parties (partyid INTEGER PRIMARY KEY ASC, name TEXT, position INTEGER, judgmentid INTEGER)']
-    create_tables_interactively(cursor,['courts','citationcodes','judgmentcodes','judgments','parties'],s)
+    create_tables_interactively(cursor,['courtcategories','courts','citationcodes','judgmentcodes','judgments','parties'],s)
 
 
 def analyse_file(filename,dbfile_name,use_multiprocessing):
@@ -113,9 +114,26 @@ def write_metadata_to_sql(d,cursor,rel_judgment_dir):
         (courtid,abbreviated_court,court_url) = result
     else:
         court_url = os.path.join(rel_judgment_dir,abbreviated_court+'/')
-        cursor.execute('INSERT INTO courts(name, abbreviated_name,url) VALUES (?,?,?)', (d["court_name"],abbreviated_court,court_url))
-        courtid = cursor.lastrowid
+        
+        # Find the correct court category
+        courtcategory = False
+        for category,l in courts.categories.iteritems():
+            if abbreviated_court in l:
+                courtcategory = category
+                break
+        if not courtcategory:
+            raise StandardConversionError("something's going wrong: we can't find a courtcategory for " + abbreviated_court)
+        cursor.execute('SELECT courtcategoryid FROM courtcategories WHERE name = ?', (courtcategory,))
+        result = cursor.fetchone()
+        if result:
+            courtcategoryid = result[0]
+        else:
+            cursor.execute('INSERT INTO courtcategories (name) VALUES (?)',(courtcategory,))
+            courtcategoryid = cursor.lastrowid
 
+        cursor.execute('INSERT INTO courts(name, courtcategoryid, abbreviated_name,url) VALUES (?,?,?,?)', (d["court_name"],courtcategoryid,abbreviated_court,court_url))
+        courtid = cursor.lastrowid
+        
     # insert a record
     for judgmental_url in best_filename(d["date"].year, abbreviated_court, court_url, d["citations"]):
         try:
