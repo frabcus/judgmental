@@ -20,7 +20,7 @@ with open("template.html",'r') as html_template_file:
     html_template_stringio = StringIO(html_template_file.read())
 
 
-def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do_legislation):
+def convert(file_list, dbfile_name, logfile, public_html_dir, use_multiprocessing, do_legislation):
 
     print "-"*25
     print "Conversion..."
@@ -54,20 +54,21 @@ def convert(file_list, dbfile_name, logfile, output_dir, use_multiprocessing, do
 
     print "Converting files"
     with ProcessManager(use_multiprocessing) as process_pool:
+        print file_list
         for fullname in file_list:
             basename = os.path.basename(fullname)
-            process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation),callback=convert_report(basename))
+            process_pool.apply_async(convert_file,(fullname,basename,dbfile_name,use_multiprocessing,public_html_dir,do_legislation),callback=convert_report(basename))
 
     broadcast(logfile,"Converted %d files successfully"%finished_count.count)
 
 
 
-def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do_legislation):
+def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_dir,do_legislation):
     try:
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
-            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,courts.abbreviated_name,bailii_url,judgmental_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
+            metadata = list(cursor.execute('SELECT judgmentid,title,date,courts.name,courts.abbreviated_name,courts.url,bailii_url,judgmental_url FROM judgments JOIN courts ON judgments.courtid=courts.courtid WHERE filename=?',(basename,)))
             try:
-                (judgmentid,title,date,court_name,abbreviated_court,bailii_url,judgmental_url) = metadata[0]
+                (judgmentid,title,date,court_name,abbreviated_court,court_url,bailii_url,judgmental_url) = metadata[0]
             except IndexError:
                 raise NoMetadata
             judgmentcitationcodes = list(x[0] for x in cursor.execute('SELECT citationcode FROM judgmentcodes JOIN citationcodes ON judgmentcodes.citationcodeid=citationcodes.citationcodeid WHERE judgmentid=?',(judgmentid,)))
@@ -108,7 +109,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
         template.find('//span[@id="meta-citation"]').text = ", ".join(judgmentcitationcodes)
         template.find('//div[@id="content"]/h1').text = court_name
         template.find('//a[@id="bc-courtname"]').text = court_name
-        template.find('//a[@id="bc-courtname"]').set('href','/judgments/'+abbreviated_court+'/')
+        template.find('//a[@id="bc-courtname"]').set('href',court_url)
         template.find('//span[@id="bc-description"]').text = title
 
         # add links to crossreferences, or delete the templates for them
@@ -138,7 +139,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,output_dir,do
                     li.append(a)
                     l_out.append(li)
 
-        path = os.path.join(output_dir, judgmental_url)
+        path = os.path.join(public_html_dir, judgmental_url.lstrip('/'))
                 
         # Write out the judgment
         dirname = os.path.dirname(path)

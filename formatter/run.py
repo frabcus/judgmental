@@ -162,7 +162,7 @@ def do_the_business():
         if do_convert:
             conversion_start = time.time()
             start = datetime.now()
-            convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,output_dir=output_dir,use_multiprocessing=use_multiprocessing,do_legislation=do_legislation)
+            convert.convert(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,public_html_dir=public_html_dir,use_multiprocessing=use_multiprocessing,do_legislation=do_legislation)
             elapsed = datetime.now() - start
             broadcast(logfile,"Convert phase took %s"%elapsed)
             if do_delete_html:
