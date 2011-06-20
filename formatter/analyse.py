@@ -13,7 +13,7 @@ from general import *
 
 
 
-def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
+def analyse(file_list, dbfile_name, logfile, use_multiprocessing, rel_judgment_dir):
 
     print "-"*25
     print "Analysis..."
@@ -30,7 +30,7 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
                 try:
                     if s:
                         try:
-                            write_metadata_to_sql(d,cursor)
+                            write_metadata_to_sql(d,cursor,rel_judgment_dir)
                         except sqlite.IntegrityError, e:
                             raise StandardConversionError("sqlite.IntegrityError: %s - Citations extracted: %s "%(str(e), d['citations']))
                         finished_count.inc()
@@ -48,24 +48,24 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing):
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
 
-def best_filename(year, abbreviated_court, citations):
+def best_filename(year, abbreviated_court, court_url, citations):
     """Choose the best name for this judgment from the available citations. Is a generator, returning alternative versions."""
 
     dummy_citation = "[%d] %s " % (year, abbreviated_court)
     
     (distance, name) = min((levenshtein.levenshtein(dummy_citation, s, deletion_cost=2,substitution_cost=2), s) for s in citations)
   
-    basic_name = abbreviated_court+"/"+str(year)+"/"+name.replace(' ','_').replace('/','__')
+    basic_name = str(year)+"/"+name.replace(' ','_').replace('/','__')
 
-    yield basic_name + ".html"
+    yield os.path.join(court_url,basic_name + ".html")
     for c in range(1,100):
-        yield basic_name + "_%d"%c + ".html"
+        yield os.path.join(court_url, basic_name + "_%d"%c + ".html")
     raise StandardConversionError("something's going wrong: we can't give this a filename")
 
 
 def create_tables(cursor):
     "Create tables in an SQL database"
-    s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, abbreviated_name TEXT UNIQUE)',
+    s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, abbreviated_name TEXT UNIQUE, url TEXT)',
          'CREATE TABLE citationcodes (citationcodeid INTEGER PRIMARY KEY ASC, citationcode TEXT UNIQUE)',
          'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER, judgmentid INTEGER)',
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
@@ -93,12 +93,12 @@ def analyse_file(filename,dbfile_name,use_multiprocessing):
         return (False,e.message)
 
 
-def write_metadata_to_sql(d,cursor):
+def write_metadata_to_sql(d,cursor,rel_judgment_dir):
     "Inserts judgment metadata to SQL database"
 
     # make sure there's a record for the court
     def get_court(court_name):
-        cursor.execute('SELECT courtid,abbreviated_name FROM courts WHERE name = ?', (court_name,))
+        cursor.execute('SELECT courtid,abbreviated_name,url FROM courts WHERE name = ?', (court_name,))
         result = cursor.fetchone()
         return result
 
@@ -108,13 +108,14 @@ def write_metadata_to_sql(d,cursor):
         result = get_court(d["court_name"])
 
     if result:
-        (courtid,abbreviated_court) = result
+        (courtid,abbreviated_court,court_url) = result
     else:
-        cursor.execute('INSERT INTO courts(name, abbreviated_name) VALUES (?,?)', (d["court_name"],abbreviated_court))
+        court_url = os.path.join(rel_judgment_dir,abbreviated_court+'/')
+        cursor.execute('INSERT INTO courts(name, abbreviated_name,url) VALUES (?,?,?)', (d["court_name"],abbreviated_court,court_url))
         courtid = cursor.lastrowid
 
     # insert a record
-    for judgmental_url in best_filename(d["date"].year, abbreviated_court, d["citations"]):
+    for judgmental_url in best_filename(d["date"].year, abbreviated_court, court_url, d["citations"]):
         try:
             cursor.execute('INSERT INTO judgments(title, date, courtid, filename, bailii_url, judgmental_url) VALUES (?, ?, ?, ?, ?, ?)', (d["title"], d["date"], courtid, d["filename"], d["bailii_url"], judgmental_url))
             break

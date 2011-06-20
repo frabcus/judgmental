@@ -55,7 +55,9 @@ from general import *
 # standard filenames
 file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 input_dir = os.path.join(file_dir, "../../bailii")
-output_dir = os.path.join(file_dir, "../../public_html_nonlive/judgments")
+public_html_dir = os.path.join(file_dir, "../../public_html")
+rel_judgment_dir = "/judgments"
+output_dir = os.path.join(public_html_dir, rel_judgment_dir.lstrip('/'))
 logfile_name = os.path.join(file_dir, "../../errors.log")
 dbfile_name = os.path.join(file_dir, "../../judgmental_nonlive.db")
 
@@ -145,7 +147,7 @@ def do_the_business():
         # analysis stage
         if do_analyse:
             start = datetime.now()
-            analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing)
+            analyse.analyse(file_list=file_list,dbfile_name=dbfile_name,logfile=logfile,use_multiprocessing=use_multiprocessing,rel_judgment_dir=rel_judgment_dir)
             elapsed = datetime.now() - start
             broadcast(logfile,"Analyse phase took %s"%elapsed)
 
