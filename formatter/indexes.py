@@ -115,7 +115,7 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
                     table_content.append(year_content_div)
                     
                 case = make_element("div", {"class": "row"}, "")
-                link = make_element("a", {"href": "/judgments/"+judgmental_url}, title)
+                link = make_element("a", {"href": judgmental_url}, title)
                 case.append(link)
                 case.tail = "\n"
                 year_content_div.append(case)
