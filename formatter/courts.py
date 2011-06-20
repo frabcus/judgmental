@@ -74,7 +74,7 @@ courts = [
 categories = {
 
 "United Kingdom": ["UKSC", "CAT", "UKPC", "UKVAT", "UKVAT-Customs", "UKVAT-Excise", "UKVAT-Landfill", 
-"UKVAT-IPT", "UKEAT", "UKUT-AAC", "UKUT-LC", "UKUT-TCC-", "DRS", "UKSIAC", 
+"UKVAT-IPT", "UKEAT", "UKUT-AAC", "UKUT-LC", "UKUT-TCC", "DRS", "UKSIAC",
 "UKSPC", "UKSSCSC", "UKFTT-TC", "UKFTT-HESC","UKHL", "UKIT", "UKFSM", "UKIAT"],
 
 "England and Wales": ["EWCA-Civ", "EWCA-Crim", "EWCST", "EWCC-Fam", "EWLands", "EWPCC", "EWHC-Comm", 
