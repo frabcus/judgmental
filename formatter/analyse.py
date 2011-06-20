@@ -68,6 +68,8 @@ def create_tables(cursor):
     s = ['CREATE TABLE courts (courtid INTEGER PRIMARY KEY ASC, name TEXT UNIQUE, abbreviated_name TEXT UNIQUE, url TEXT)',
          'CREATE TABLE citationcodes (citationcodeid INTEGER PRIMARY KEY ASC, citationcode TEXT UNIQUE)',
          'CREATE TABLE judgmentcodes (judgmentcodeid INTEGER PRIMARY KEY ASC, citationcodeid INTEGER, judgmentid INTEGER)',
+         'CREATE INDEX judgmentcodes_judgmentid ON judgmentcodes (judgmentid)',
+         'CREATE INDEX judgmentcodes_citationcodeid ON judgmentcodes (citationcodeid)',
          'CREATE TABLE judgments (judgmentid INTEGER PRIMARY KEY ASC, title TEXT, date DATE, courtid INTEGER, filename TEXT UNIQUE, bailii_url TEXT UNIQUE, judgmental_url TEXT UNIQUE)',
          'CREATE TABLE parties (partyid INTEGER PRIMARY KEY ASC, name TEXT, position INTEGER, judgmentid INTEGER)']
     create_tables_interactively(cursor,['courts','citationcodes','judgmentcodes','judgments','parties'],s)

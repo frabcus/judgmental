@@ -64,7 +64,7 @@ def crossreference(file_list, dbfile_name, logfile, use_multiprocessing):
 
 
 def create_table(cursor):
-    create_tables_interactively(cursor,['crossreferences'],['CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationcodeid INTEGER)'])
+    create_tables_interactively(cursor,['crossreferences'],['CREATE TABLE crossreferences (crossreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, citationcodeid INTEGER)', 'CREATE INDEX crossreferences_judgmentid ON crossreferences (judgmentid)', 'CREATE INDEX crossreferences_citationcodeid ON crossreferences (citationcodeid)'])
 
 
 def crossreference_file(fullname,basename,dbfile_name,use_multiprocessing):
