@@ -52,7 +52,7 @@ while len(arguments)>0:
     	verbose = True
 
 uritemplate = "http://legislation.data.gov.uk/ukpga/%d/data.feed"
-dbfile = "../../judgmental.db"
+dbfile = "../../judgmental_nonlive.db"
 
 with DatabaseManager(dbfile, False) as cursor:
 	create_tables_interactively(cursor,['legislation'],['CREATE TABLE legislation (legislationid INTEGER PRIMARY KEY ASC, title TEXT, link TEXT)'])
