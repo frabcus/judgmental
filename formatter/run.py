@@ -51,87 +51,88 @@ import indexes
 import delete_html
 from general import *
 
+if __name__ == '__main__':
 
-# standard filenames
-file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
-input_dir = os.path.join(file_dir, "../../bailii")
-public_html_dir = os.path.join(file_dir, "../../public_html")
-rel_judgment_dir = "/judgments"
-output_dir = os.path.join(public_html_dir, rel_judgment_dir.lstrip('/'))
-logfile_name = os.path.join(file_dir, "../../errors.log")
-dbfile_name = os.path.join(file_dir, "../../judgmental_nonlive.db")
+    # standard filenames
+    file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
+    input_dir = os.path.join(file_dir, "../../bailii")
+    public_html_dir = os.path.join(file_dir, "../../public_html")
+    rel_judgment_dir = "/judgments"
+    output_dir = os.path.join(public_html_dir, rel_judgment_dir.lstrip('/'))
+    logfile_name = os.path.join(file_dir, "../../errors.log")
+    dbfile_name = os.path.join(file_dir, "../../judgmental_nonlive.db")
 
-# default options
-use_multiprocessing = multi_enabled # which is defined by general.py
-do_analyse = True
-do_crossreference = True
-do_convert = True
-do_legislation = True
-do_index = True
-do_disambiguation = True
-run_on_all_files = True
-do_delete_db = False
-do_delete_html = False
-profiling = False
-file_list = []
+    # default options
+    use_multiprocessing = multi_enabled # which is defined by general.py
+    do_analyse = True
+    do_crossreference = True
+    do_convert = True
+    do_legislation = True
+    do_index = True
+    do_disambiguation = True
+    run_on_all_files = True
+    do_delete_db = False
+    do_delete_html = False
+    profiling = False
+    file_list = []
 
-# parse command-line options
-arguments = sys.argv[1:]
-while len(arguments)>0:
-    a = arguments[0]
-    arguments = arguments[1:]
-    if a == "--no-analyse" or a == "--no-analysis":
-        print "Option --no-analyse selected"
-        do_analyse = False
-    elif a == "--no-crossreference":
-        print "Option --no-crossreference selected"
-        do_crossreference = False
-    elif a == "--no-convert":
-        print "Option --no-convert selected"
-        do_convert = False
-    elif a == "--no-legislation":
-        print "Option --no-legislation selected"
-        do_legislation = False
-    elif a == "--no-index":
-        print "Option --no-index selected"
-        do_index = False
-    elif a == "--no-disambiguation":
-        print "Option --no-disambiguation selected"
-        do_disambiguation = False
-    elif a == "--slow":
-        print "Option --slow selected"
-        use_multiprocessing = False
-    elif a == "--delete-html":
-        print "Option --delete-html selected"
-        do_delete_html = True
-    elif a == "--delete-db":
-        print "Option --delete-db selected"
-        do_delete_db = True
-    elif a == "--profile":
-        print "Option --profile selected"
-        profiling = True
-    elif a == "--files":
-        print "Using file list supplied"
-        run_on_all_files = False
-        while len(arguments)>0 and (arguments[0][:2] != "--"):
-            file_list.append(arguments[0])
-            arguments = arguments[1:]
-    else:
-        print "FATAL: I don't understand the command-line argument %s"%a
+    # parse command-line options
+    arguments = sys.argv[1:]
+    while len(arguments)>0:
+        a = arguments[0]
+        arguments = arguments[1:]
+        if a == "--no-analyse" or a == "--no-analysis":
+            print "Option --no-analyse selected"
+            do_analyse = False
+        elif a == "--no-crossreference":
+            print "Option --no-crossreference selected"
+            do_crossreference = False
+        elif a == "--no-convert":
+            print "Option --no-convert selected"
+            do_convert = False
+        elif a == "--no-legislation":
+            print "Option --no-legislation selected"
+            do_legislation = False
+        elif a == "--no-index":
+            print "Option --no-index selected"
+            do_index = False
+        elif a == "--no-disambiguation":
+            print "Option --no-disambiguation selected"
+            do_disambiguation = False
+        elif a == "--slow":
+            print "Option --slow selected"
+            use_multiprocessing = False
+        elif a == "--delete-html":
+            print "Option --delete-html selected"
+            do_delete_html = True
+        elif a == "--delete-db":
+            print "Option --delete-db selected"
+            do_delete_db = True
+        elif a == "--profile":
+            print "Option --profile selected"
+            profiling = True
+        elif a == "--files":
+            print "Using file list supplied"
+            run_on_all_files = False
+            while len(arguments)>0 and (arguments[0][:2] != "--"):
+                file_list.append(arguments[0])
+                arguments = arguments[1:]
+        else:
+            print "FATAL: I don't understand the command-line argument %s"%a
+            quit()
+
+    # one argument combination is stupid
+    if (do_analyse, do_crossreference, do_convert) == (True,False,True):
+        print "FATAL: You're planning to generate a database without crossreferencing information in. That won't work."
         quit()
 
-# one argument combination is stupid
-if (do_analyse, do_crossreference, do_convert) == (True,False,True):
-    print "FATAL: You're planning to generate a database without crossreferencing information in. That won't work."
-    quit()
-
-# default is to use all files
-print "Generating file list"
-if run_on_all_files:
-    for (path,dirs,files) in os.walk(input_dir):
-        for f in files:
-            if f[-5:] == ".html":
-                file_list.append(os.path.join(path,f))
+    # default is to use all files
+    print "Generating file list"
+    if run_on_all_files:
+        for (path,dirs,files) in os.walk(input_dir):
+            for f in files:
+                if f[-5:] == ".html":
+                    file_list.append(os.path.join(path,f))
 
 def do_the_business():
     # open logfile
@@ -183,9 +184,9 @@ def do_the_business():
             elapsed = datetime.now() - start
             broadcast(logfile,"Index phase took %s"%elapsed)
 
-
-if profiling:
-    import cProfile
-    cProfile.run("do_the_business()")
-else:
-    do_the_business()
+if __name__ == '__main__':
+    if profiling:
+        import cProfile
+        cProfile.run("do_the_business()")
+    else:
+        do_the_business()
