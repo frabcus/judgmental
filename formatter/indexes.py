@@ -162,7 +162,7 @@ def make_top_index(output_dir):
 
         print "make_top_index"
                 
-        outfile = open(os.path.join(output_dir,"index.html"),'w')
+        outfile = open(os.path.join(output_dir,"../index.html"),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
         return (True,"")
 
