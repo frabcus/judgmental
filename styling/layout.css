@@ -150,6 +150,9 @@ td {
     }
     #content li { list-style: disc; }
 
+    /* Reintroduce paragraph numbers where given */
+    #content li[value] { list-style-type: decimal }
+
     #crossreferences ul { margin: 0; }
     #crossreferences li { list-style: none; }
 
