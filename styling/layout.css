@@ -144,7 +144,10 @@ td {
         color:#444;
     }
 
-    #content ul { margin-left: 2em; }
+    #content ul {
+        margin-left: 2em;
+        margin-bottom: 10px;    /* to be like <p> */
+    }
     #content li { list-style: disc; }
 
     #crossreferences ul { margin: 0; }
