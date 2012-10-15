@@ -1,54 +1,39 @@
-<!DOCTYPE html
-     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-
-<html>
-
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
   <head>
     <title>MISSING TITLE</title>
-    <link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+    <esi:include src="/head.html" />
   </head>
-
-
   <body>
-    <div id="page_container">
-      <div id="page_inner">
-        <div id="header">
-          <div id="site_title">
-            <h1><a href="/" title="Home Page"><span>Judgmental</span></a></h1>
-          </div>
-        </div>
-        <div id="nav">
-          <ul>
-            <li><a href="/">Home</a></li>
-          </ul>
-        </div>
-
+    <div id="page-container">
+      <div id="page-inner">
+        <esi:include src="/header.html" />
+        <esi:include src="/nav.html" />
         <div id="content">
+
           <h1>MISSING COURT NAME</h1>
 
-
           <div id="breadcrumb">
-            <span class="you_are">This judgment:</span>
+            <span class="you-are">This judgment:</span>
             <a href="/">Home</a>
             <a href="/MISSING_LINK" class="court" id="bc-courtname">MISSING COURT NAME</a>
             <span class="here" id="bc-description">MISSING DESCRIPTION</span>
           </div>
 
           <div class="meta">
-            <span class="cite_as">Cite as:</span>
+            <span class="cite-as">Cite as:</span>
             <span class="here" id="meta-citation">
               MISSING CITATION DETAILS
             </span>
           </div>
 
 	  <div id="crossreferences">
-	    <span id="crossreferences_in">
+	    <span id="crossreferences-in">
 	      <p>This judgment is cited by the following judgments:</p>
-	      <ul id="crossreferences_in_list"></ul></span>
-	    <span id="crossreferences_out">
+	      <ul id="crossreferences-in-list"></ul></span>
+	    <span id="crossreferences-out">
 	      <p>This judgment cites the following other judgments:</p>
-	      <ul id="crossreferences_out_list"></ul></span>
+	      <ul id="crossreferences-out-list"></ul></span>
 	  </div>
 
           <div class="date" id="meta-date">MISSING DATE</div>
@@ -57,11 +42,9 @@
 
           <div class="permission">This judgment is Crown Copyright.</div>
 
-          <div id="footer">
-              <p>Judgmental is powered by <a href="http://bigv.io" target="_new">BigV.io</a>, a cracking scalable virtual server solution generously provided by <a href="http://www.bytemark.co.uk" target="_new">Bytemark Hosting</a>.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+        </div> <!-- #content -->
+<esi:include src="/footer.html" />
+      </div> <!-- #page-inner -->
+    </div> <!-- #page-container -->
   </body>
 </html>

@@ -2,24 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
     <title>About - Judgmental.org.uk</title>
-    <link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <esi:include src="/head.html" />
 </head>
 <body>
-    <div id="page_container">
-        <div id="page_inner">
-            <div id="header">
-                <div id="site_title">
-                    <h1><a href="/" title="Home Page"><span>Judgmental</span></a></h1>
-                </div>
-            </div>
-            <nav id="nav">
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contribute.html">Contribute</a></li>
-                </ul>
-            </nav>
+    <div id="page-container">
+        <div id="page-inner">
+            <esi:include src="/header.html" />
+            <esi:include src="/nav.html" />
 <div id="content">
 <h1>Contribute to the Judgmental.org.uk project!</h1>
 
@@ -67,7 +56,8 @@ legal information</a> then you can help us achieve it.</p>
 </ul>
 
 </div> <!-- #content -->
-</div> <!-- #page_inner -->
-</div> <!-- #page_container -->
+<esi:include src="/footer.html" />
+</div> <!-- #page-inner -->
+</div> <!-- #page-container -->
 </body>
 </html>

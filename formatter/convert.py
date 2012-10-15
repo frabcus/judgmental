@@ -117,9 +117,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
             template.find('//div[@id="crossreferences"]').drop_tree()
         else:
             if len(crossreferences_in)==0:
-                template.find('//span[@id="crossreferences_in"]').drop_tree()
+                template.find('//span[@id="crossreferences-in"]').drop_tree()
             else:
-                l_in = template.find('//ul[@id="crossreferences_in_list"]')
+                l_in = template.find('//ul[@id="crossreferences-in-list"]')
                 for (t,f) in crossreferences_in:
                     li = etree.Element("li")
                     a = etree.Element("a")
@@ -128,9 +128,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
                     li.append(a)
                     l_in.append(li)
             if len(crossreferences_out)==0:
-                template.find('//span[@id="crossreferences_out"]').drop_tree()
+                template.find('//span[@id="crossreferences-out"]').drop_tree()
             else:
-                l_out = template.find('//ul[@id="crossreferences_out_list"]')
+                l_out = template.find('//ul[@id="crossreferences-out-list"]')
                 for (t,_,f) in crossreferences_out:
                     li = etree.Element("li")
                     a = etree.Element("a")

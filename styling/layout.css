@@ -20,20 +20,20 @@ html, body {
     height: 100%;
 }
 
-#page_container {
+#page-container {
     min-height: 100%;
     height:auto !important;
     height:100%;
     width: 100%;
 }
 
-* html #page_inner {
+* html #page-inner {
     height: 100%;
 }
 
 /* Main Layout Containers ------------------------------------- */
 
-#page_inner {
+#page-inner {
     width:960px;
     margin:10px auto;
 }
@@ -87,16 +87,16 @@ td {
 
 /* Navigation ------------------------------------------------ */
 
-#site_title h1 { padding-top:10px;}
+#site-title h1 { padding-top:10px;}
 
-#site_title a {
+#site-title a {
     background:url('logo.png') top left no-repeat;
     width:402px; height:111px;
     margin:10px;
     display:block;
 }
 
-#site_title a span { display:none; }
+#site-title a span { display:none; }
 
 #nav ul {
     margin:10px;
@@ -173,7 +173,7 @@ em {
     background:#eee;
 }
 
-    #breadcrumb .you_are {
+    #breadcrumb .you-are {
         font-weight:bold;
     }
 
@@ -196,7 +196,7 @@ em {
     margin:10px 0;
     background:#eee;
 }
-    .meta .cite_as {
+    .meta .cite-as {
         font-weight:bold;
     }
 
