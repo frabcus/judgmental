@@ -9,19 +9,15 @@ it easier to maintain and develop.
 
 Obviously, everything wants done "as quickly as possible" :)
 
-* Add "About" and "Contacts" pages
-    * "How can I help" section [enhancement]
-        * Accessibility audit
-        * Improve layout on smaller screens
-* Be a little bit dynamic (cache + ESI) [enhancement] [important]
-    * Makes sense to do this before making other structural changes
 * Site Search (using Google) [enhancement]
+* Incorrect dates for ScotHC [bug]
+* Missing indexes [bug] [important]
 * Analyse and interpret BAILII links [bug] [important]
 * Tabs for main sections on home page
 * Duplicate citation errors [bug] [important]
 * Manage changing filenames [enhancement] [important]
-* Missing indexes [bug] [important]
-* Restore paragraph numbers
+* Accessibility audit
+* Improve layout on smaller screens
 * RSS feeds
 * Make a sitemap.xml for Google [enhancement]
 * Legal stuff:
