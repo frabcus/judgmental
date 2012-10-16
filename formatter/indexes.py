@@ -72,11 +72,13 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
     year_content_div = None
     try:
     
-        template = html.parse(html_template_index_stringio)
-        template.find('//title').text = name + ": Judgmental"
-        template.find('//div[@id="content"]/h1').text = name
-        template.find('//span[@id="bc-courtname"]').text = name
-        missing_index = template.find('//div[@class="index"]')
+        XHTML_NS = "http://www.w3.org/1999/xhtml" # See notes in convert.py
+        template = etree.parse(html_template_index_stringio)
+        template.find('//{%s}title' % XHTML_NS).text = name + ": Judgmental"
+        # For some reason with etree this really ends with '/', not '/h1'; why?
+        template.find('//{%s}div[@id="content"]/' % XHTML_NS).text = name
+        template.find('//{%s}span[@id="bc-courtname"]' % XHTML_NS).text = name
+        missing_index = template.find('//{%s}div[@class="index"]' % XHTML_NS)
         missing_index.text = ""
         table = make_element("table",{},"")
         missing_index.append(table)
@@ -136,12 +138,14 @@ def make_court_index(id,name,dbfile_name,use_multiprocessing,output_dir):
 def make_top_index(output_dir):
     try:
         print "make_top_index"
-        template = html.parse(html_template_index_stringio)
+        XHTML_NS = "http://www.w3.org/1999/xhtml" # See notes in convert.py
+        template = etree.parse(html_template_index_stringio)
         name = "All Courts and Tribunals"
-        template.find('//title').text = name + ": Judgmental"
-        template.find('//div[@id="content"]/h1').text = name
-        template.find('//span[@id="bc-courtname"]').text = ""
-        missing_index = template.find('//div[@class="index"]')
+        template.find('//{%s}title' % XHTML_NS).text = name + ": Judgmental"
+        # For some reason with etree this really ends with '/', not '/h1'; why?
+        template.find('//{%s}div[@id="content"]/' % XHTML_NS).text = name
+        template.find('//{%s}span[@id="bc-courtname"]' % XHTML_NS).text = ""
+        missing_index = template.find('//{%s}div[@class="index"]' % XHTML_NS)
         missing_index.text = ""
 
         print "make_top_index"

@@ -52,10 +52,11 @@ def disambiguate(code,judgmentids_string,output_dir,dbfile_name,use_multiprocess
     judgmentids = judgmentids_string.split(",")
     try:
 
-        template = html.parse(html_template_stringio)
-        template.find('//title').text = "Disambiguation: %s"%code
-        template.find('//h1').text = "Disambiguation: %s"%code
-        disambiguation_list = template.find('//ul')
+        XHTML_NS = "http://www.w3.org/1999/xhtml" # See notes in convert.py
+        template = etree.parse(html_template_stringio)
+        template.find('//{%s}title' % XHTML_NS).text = "Disambiguation: %s"%code
+        template.find('//{%s}h1' % XHTML_NS).text = "Disambiguation: %s"%code
+        disambiguation_list = template.find('//{%s}ul' % XHTML_NS)
 
         possibilities = []
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:

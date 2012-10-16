@@ -91,7 +91,14 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
         page = html.parse(pagetext)
         opinion = find_opinion(page)
 
-        template = html.parse(html_template_stringio)
+        # html.parse doesn't keep the namespace on <esi:include /> tags,
+        # which is needed for ESI processing, so we need to use etree...
+        template = etree.parse(html_template_stringio)
+
+        # ... but etree requires namespaces for /everything/, so we follow
+        # this example from the lxml docs
+        # (http://lxml.de/tutorial.html#namespaces)
+        XHTML_NS = "http://www.w3.org/1999/xhtml"
 
         report = []
 
@@ -101,25 +108,27 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
         if empty_paragraphs_to_breaks(opinion):
             report.append("empty_paragraphs_to_breaks")
 
-        missing_opinion = template.find('//div[@class="opinion"]/p')
+        # For some reason with etree this really ends with '/', not '/p'
+        missing_opinion = template.find('//{%s}div[@class="opinion"]/' % XHTML_NS)
         missing_opinion.getparent().replace(missing_opinion,opinion)
 
-        template.find('//title').text = title
-        template.find('//div[@id="meta-date"]').text = date
-        template.find('//span[@id="meta-citation"]').text = ", ".join(judgmentcitationcodes)
-        template.find('//div[@id="content"]/h1').text = court_name
-        template.find('//a[@id="bc-courtname"]').text = court_name
-        template.find('//a[@id="bc-courtname"]').set('href',court_url)
-        template.find('//span[@id="bc-description"]').text = title
+        template.find('//{%s}title' % XHTML_NS).text = title
+        template.find('//{%s}div[@id="meta-date"]' % XHTML_NS).text = date
+        template.find('//{%s}span[@id="meta-citation"]' % XHTML_NS).text = ", ".join(judgmentcitationcodes)
+        # Likewise here (for an h1)...
+        template.find('//{%s}div[@id="content"]/' % XHTML_NS).text = court_name
+        template.find('//{%s}a[@id="bc-courtname"]' % XHTML_NS).text = court_name
+        template.find('//{%s}a[@id="bc-courtname"]' % XHTML_NS).set('href',court_url)
+        template.find('//{%s}span[@id="bc-description"]' % XHTML_NS).text = title
 
         # add links to crossreferences, or delete the templates for them
         if len(crossreferences_in)==0 and len(crossreferences_out)==0:
-            template.find('//div[@id="crossreferences"]').drop_tree()
+            template.find('//{%s}div[@id="crossreferences"]' % XHTML_NS).clear()
         else:
             if len(crossreferences_in)==0:
-                template.find('//span[@id="crossreferences-in"]').drop_tree()
+                template.find('//{%s}span[@id="crossreferences-in"]' % XHTML_NS).clear()
             else:
-                l_in = template.find('//ul[@id="crossreferences-in-list"]')
+                l_in = template.find('//{%s}ul[@id="crossreferences-in-list"]' % XHTML_NS)
                 for (t,f) in crossreferences_in:
                     li = etree.Element("li")
                     a = etree.Element("a")
@@ -128,9 +137,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
                     li.append(a)
                     l_in.append(li)
             if len(crossreferences_out)==0:
-                template.find('//span[@id="crossreferences-out"]').drop_tree()
+                template.find('//{%s}span[@id="crossreferences-out"]' % XHTML_NS).clear()
             else:
-                l_out = template.find('//ul[@id="crossreferences-out-list"]')
+                l_out = template.find('//{%s}ul[@id="crossreferences-out-list"]' % XHTML_NS)
                 for (t,_,f) in crossreferences_out:
                     li = etree.Element("li")
                     a = etree.Element("a")
@@ -140,7 +149,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
                     l_out.append(li)
 
         path = os.path.join(public_html_dir, judgmental_url.lstrip('/'))
-                
+
         # Write out the judgment
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
