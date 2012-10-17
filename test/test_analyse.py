@@ -7,7 +7,8 @@ import re
 from cStringIO import StringIO
 from lxml import html
 
-import judgmental.general
+from judgmental.general import open_bailii_html
+from judgmental.analyse import find_date
 
 class TestDateParsing(unittest.TestCase):
 
@@ -24,12 +25,12 @@ class TestDateParsing(unittest.TestCase):
 
     def test_date_parsing(self):
         for f in self.test_subjects:
-            html_io = judgmental.general.open_bailii_html(os.path.join(self.input_dir, f))
+            html_io = open_bailii_html(os.path.join(self.input_dir, f))
             page = html.parse(html_io)
             self.assertTrue(page.getroot())
             titletag = page.find("//title")
-            title = re.sub('  +', ' ', page.find("//title"))
-            date = judgmental.general.find_date(page,titletag,title)
+            title = re.sub('  +', ' ', page.find("//title").text)
+            date = find_date(page,titletag,title)
             print date
 
 if __name__ == '__main__':

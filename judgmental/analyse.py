@@ -300,6 +300,9 @@ def find_date(page,titletag,titletext):
                 attempt(raw_date.groups()[0])
 
     except GotIt, g:
+        print "Found: ", g
+        print "Found: ", g.value
+        print "Found: ", g.value.date()
         return g.value.date()
 
     raise CantFindDate()
