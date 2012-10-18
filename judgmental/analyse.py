@@ -43,7 +43,7 @@ def analyse(file_list, dbfile_name, logfile, use_multiprocessing, rel_judgment_d
 
         with ProcessManager(use_multiprocessing) as process_pool:
             for filename in file_list:
-                process_pool.apply_async(analyse_file,(filename,dbfile_name,use_multiprocessing),callback=analyse_report(filename))
+                process_pool.apply_async(analyse_file,(filename),callback=analyse_report(filename))
 
     broadcast(logfile,"Extracted metadata from %d files"%(finished_count.count))
         
@@ -76,7 +76,7 @@ def create_tables(cursor):
     create_tables_interactively(cursor,['courtcategories','courts','citationcodes','judgmentcodes','judgments','parties'],s)
 
 
-def analyse_file(filename,dbfile_name,use_multiprocessing):
+def analyse_file(filename):
     try:
         page = html.parse(open_bailii_html(filename))
 
