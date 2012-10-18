@@ -242,8 +242,13 @@ def find_citations(page,title):
 def find_date(page,titletag,titletext):
     "Epic function to find the date of the judgment"
 
-    # parenthesised search object
-    r = re.compile("\\(([^()]*)($|\\))")
+    # parenthesised search object. Explanation:
+    # \\W\\(   --> literal open bracket following non-word character
+    # ([^()]*) --> capture as many non-parens chars as possible...
+    # ($|\\))  --> ... until end of string or closing paren
+    # '\\W' added to exclude legislation citations e.g. '194d(3)'
+    # XXX Needs more testing though!
+    r = re.compile("\\W\\(([^()]*)($|\\))")
 
     def scan(s):
         for raw_date in r.finditer(remove_nb_space(s or "")):
@@ -300,9 +305,6 @@ def find_date(page,titletag,titletext):
                 attempt(raw_date.groups()[0])
 
     except GotIt, g:
-        print "Found: ", g
-        print "Found: ", g.value
-        print "Found: ", g.value.date()
         return g.value.date()
 
     raise CantFindDate()
