@@ -10,11 +10,20 @@ it easier to maintain and develop.
 Obviously, everything wants done "as quickly as possible" :)
 
 * Site Search (using Google) [enhancement]
-* Incorrect dates for ScotHC [bug]
-* Missing indexes [bug] [important]
+* Missing indexes (don't exist right now): [bug] [important]
+    - NICC
+    - UKFTT-HESC
+    - UKFTT-TC
+    - UKIAT
+    - UKSSCSC
 * Analyse and interpret BAILII links [bug] [important]
+    - Judgment reference: turn into one of our links
+    - Legislation
+    - Other (keep)
 * Tabs for main sections on home page
 * Duplicate citation errors [bug] [important]
+    - Mostly done; see 301e71a21643
+    - "we just need to create links to disambiguation pages as appropriate"
 * Manage changing filenames [enhancement] [important]
 * Accessibility audit
 * Improve layout on smaller screens
