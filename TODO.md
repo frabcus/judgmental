@@ -9,26 +9,26 @@ it easier to maintain and develop.
 
 Obviously, everything wants done "as quickly as possible" :)
 
-* Site Search (using Google) [enhancement]
-* Missing indexes (don't exist right now): [bug] [important]
+* Site Search (using Google) *enhancement*
+* Missing indexes (don't exist right now): *bug* *important*
     - NICC
     - UKFTT-HESC
     - UKFTT-TC
     - UKIAT
     - UKSSCSC
-* Analyse and interpret BAILII links [bug] [important]
+* Analyse and interpret BAILII links *bug* *important*
     - Judgment reference: turn into one of our links
     - Legislation
     - Other (keep)
 * Tabs for main sections on home page
-* Duplicate citation errors [bug] [important]
+* Duplicate citation errors *bug* *important*
     - Mostly done; see 301e71a21643
     - "we just need to create links to disambiguation pages as appropriate"
-* Manage changing filenames [enhancement] [important]
+* Manage changing filenames *enhancement* *important*
 * Accessibility audit
 * Improve layout on smaller screens
 * RSS feeds
-* Make a sitemap.xml for Google [enhancement]
+* Make a sitemap.xml for Google *enhancement*
 * Legal stuff:
     * Takedown links
     * Redaction & data protection policy
@@ -40,20 +40,20 @@ Obviously, everything wants done "as quickly as possible" :)
     * How to store?
         * Triplestore?
 * Interface to the formatter - config file or web
-* Generate valid HTML! [bug]
-* Support citation capture (eg Zotero) [enhancement]
+* Generate valid HTML! *bug*
+* Support citation capture (eg Zotero) *enhancement*
 * Specify the open source license of the code
 * Put something in robots.txt
 * Investigate using annotateit.org for comments
-* Add links to Civil Procedure Rules [enhancement]
-* Browser toolbar to add judgments to judgmental [enhancement]
+* Add links to Civil Procedure Rules *enhancement*
+* Browser toolbar to add judgments to judgmental *enhancement*
 * Scrape HUDOC
-* Register with Google Webmaster Tools [enhancement]
-* Link to legislation.gov.uk [enhancement]
+* Register with Google Webmaster Tools *enhancement*
+* Link to legislation.gov.uk *enhancement*
 * Improve logging on failures
-* Improve output page formats (make use of xrefs) [enhancement]
-* Mark up ids of companies named in cases [enhancement]
+* Improve output page formats (make use of xrefs) *enhancement*
+* Mark up ids of companies named in cases *enhancement*
 * Judgments issued in Comic Sans - fix!
 * Offer download of all the HTML of all the case law
 * App - case updates
-* Annotations on each judgment using Disqus [enhancement]
+* Annotations on each judgment using Disqus *enhancement*
