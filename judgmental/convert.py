@@ -98,7 +98,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
         # ... but etree requires namespaces for /everything/, so we follow
         # this example from the lxml docs
         # (http://lxml.de/tutorial.html#namespaces)
-        XHTML_NS = "http://www.w3.org/1999/xhtml"
+        XHTML_NS = '{http://www.w3.org/1999/xhtml}'
 
         report = []
 
@@ -108,27 +108,25 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
         if empty_paragraphs_to_breaks(opinion):
             report.append("empty_paragraphs_to_breaks")
 
-        # For some reason with etree this really ends with '/', not '/p'
-        missing_opinion = template.find('//{%s}div[@class="opinion"]/' % XHTML_NS)
+        missing_opinion = template.find('//{0}div[@class="opinion"]/{0}p'.format(XHTML_NS))
         missing_opinion.getparent().replace(missing_opinion,opinion)
 
-        template.find('//{%s}title' % XHTML_NS).text = title
-        template.find('//{%s}div[@id="meta-date"]' % XHTML_NS).text = date
-        template.find('//{%s}span[@id="meta-citation"]' % XHTML_NS).text = ", ".join(judgmentcitationcodes)
-        # Likewise here (for an h1)...
-        template.find('//{%s}div[@id="content"]/' % XHTML_NS).text = court_name
-        template.find('//{%s}a[@id="bc-courtname"]' % XHTML_NS).text = court_name
-        template.find('//{%s}a[@id="bc-courtname"]' % XHTML_NS).set('href',court_url)
-        template.find('//{%s}span[@id="bc-description"]' % XHTML_NS).text = title
+        template.find('//{0}title'.format(XHTML_NS)).text = title
+        template.find('//{0}div[@id="meta-date"]'.format(XHTML_NS)).text = date
+        template.find('//{0}span[@id="meta-citation"]'.format(XHTML_NS)).text = ", ".join(judgmentcitationcodes)
+        template.find('//{0}div[@id="content"]/{0}h1'.format(XHTML_NS)).text = court_name
+        template.find('//{0}a[@id="bc-courtname"]'.format(XHTML_NS)).text = court_name
+        template.find('//{0}a[@id="bc-courtname"]'.format(XHTML_NS)).set('href',court_url)
+        template.find('//{0}span[@id="bc-description"]'.format(XHTML_NS)).text = title
 
         # add links to crossreferences, or delete the templates for them
         if len(crossreferences_in)==0 and len(crossreferences_out)==0:
-            template.find('//{%s}div[@id="crossreferences"]' % XHTML_NS).clear()
+            template.find('//{0}div[@id="crossreferences"]'.format(XHTML_NS)).clear()
         else:
             if len(crossreferences_in)==0:
-                template.find('//{%s}span[@id="crossreferences-in"]' % XHTML_NS).clear()
+                template.find('//{0}span[@id="crossreferences-in"]'.format(XHTML_NS)).clear()
             else:
-                l_in = template.find('//{%s}ul[@id="crossreferences-in-list"]' % XHTML_NS)
+                l_in = template.find('//{0}ul[@id="crossreferences-in-list"]'.format(XHTML_NS))
                 for (t,f) in crossreferences_in:
                     li = etree.Element("li")
                     a = etree.Element("a")
@@ -137,9 +135,9 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
                     li.append(a)
                     l_in.append(li)
             if len(crossreferences_out)==0:
-                template.find('//{%s}span[@id="crossreferences-out"]' % XHTML_NS).clear()
+                template.find('//{0}span[@id="crossreferences-out"]'.format(XHTML_NS)).clear()
             else:
-                l_out = template.find('//{%s}ul[@id="crossreferences-out-list"]' % XHTML_NS)
+                l_out = template.find('//{0}ul[@id="crossreferences-out-list"]'.format(XHTML_NS))
                 for (t,_,f) in crossreferences_out:
                     li = etree.Element("li")
                     a = etree.Element("a")
