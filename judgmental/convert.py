@@ -114,7 +114,7 @@ def convert_file(fullname,basename,dbfile_name,use_multiprocessing,public_html_d
         template.find('//{0}title'.format(XHTML_NS)).text = title
         template.find('//{0}div[@id="meta-date"]'.format(XHTML_NS)).text = date
         template.find('//{0}span[@id="meta-citation"]'.format(XHTML_NS)).text = ", ".join(judgmentcitationcodes)
-        template.find('//{0}div[@id="content"]/{0}h1'.format(XHTML_NS)).text = court_name
+        template.find('//{0}div[@id="content"]/{0}h1'.format(XHTML_NS)).text = title
         template.find('//{0}a[@id="bc-courtname"]'.format(XHTML_NS)).text = court_name
         template.find('//{0}a[@id="bc-courtname"]'.format(XHTML_NS)).set('href',court_url)
         template.find('//{0}span[@id="bc-description"]'.format(XHTML_NS)).text = title
