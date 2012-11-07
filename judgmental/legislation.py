@@ -68,7 +68,6 @@ class ImportLegislation:
         Driver method; marshal pre-requisites and call getandparse() for each
         year 1801 - <this_year>
         """
-        
         with DatabaseManager(self.dbfile, False) as cursor:
             create_tables_interactively(\
                 cursor,\
@@ -83,12 +82,13 @@ class ImportLegislation:
                     uri = self.getandparse(uri, cursor)
 
 if __name__ == "__main__":
+    verbose = ''
     arguments = sys.argv[1:]
     while len(arguments) > 0:
         a = arguments[0]
         arguments = arguments[1:]
         if a == "--verbose":
             verbose = True
-        
+
     importer = ImportLegislation(verbose=verbose)
     importer.run()
