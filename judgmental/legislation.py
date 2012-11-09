@@ -20,6 +20,7 @@ from general import \
 class ImportLegislation:
 
     def __init__(self, \
+        cursor, \
         dbfile="../../judgmental_nonlive.db", \
         uritemplate="http://legislation.data.gov.uk/ukpga/%d/data.feed", \
         verbose=False):
@@ -27,16 +28,18 @@ class ImportLegislation:
         self.uritemplate = uritemplate
         self.dbfile = dbfile
         self.verbose = verbose
+        self.cursor = cursor
 
-    def getandparse(self, uri, cursor):
+        if not self.cursor:
+            self.cursor = DatabaseManager(self.dbfile, False)
+
+    def getandparse(self, uri):
         """
         Grab legislation.gov.uk atom feed, parse, and insert legislation
         titles and links into db; assumes table `legislation` exists.
         """
     
         d = feedparser.parse(uri)
-        print d
-        quit()
     
         if self.verbose: print d.feed.links
             
@@ -50,7 +53,8 @@ class ImportLegislation:
                 
             if self.verbose: print title
     
-            cursor.execute('INSERT INTO legislation(title,link) VALUES (?,?)', \
+            self.cursor.execute(\
+                'INSERT INTO legislation(title,link) VALUES (?,?)', \
                 (title,link))
     
         try:
@@ -68,18 +72,17 @@ class ImportLegislation:
         Driver method; marshal pre-requisites and call getandparse() for each
         year 1801 - <this_year>
         """
-        with DatabaseManager(self.dbfile, False) as cursor:
-            create_tables_interactively(\
-                cursor,\
-                ['legislation'],\
-                ['CREATE TABLE legislation (legislationid INTEGER PRIMARY KEY ASC, title TEXT, link TEXT)']\
-            )
-        
-            for year in range(1801, 2012):
-                if self.verbose: print year
-                uri = self.uritemplate % year
-                while uri is not None:
-                    uri = self.getandparse(uri, cursor)
+        create_tables_interactively(\
+            self.cursor,\
+            ['legislation'],\
+            ['CREATE TABLE legislation (legislationid INTEGER PRIMARY KEY ASC, title TEXT, link TEXT)']\
+        )
+    
+        for year in range(1801, 2012):
+            if self.verbose: print year
+            uri = self.uritemplate % year
+            while uri is not None:
+                uri = self.getandparse(uri)
 
 if __name__ == "__main__":
     verbose = ''
