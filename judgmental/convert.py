@@ -10,6 +10,7 @@ import traceback
 from cStringIO import StringIO
 from prefixtree import *
 from general import *
+from legislation import ImportLegislation
 from dateutil.parser import parse as dateparse
 
 legislation_tree = PrefixTree()
@@ -28,6 +29,12 @@ def convert(file_list, dbfile_name, logfile, public_html_dir, use_multiprocessin
     if do_legislation:
         print "Making legislation prefix tree"
         with DatabaseManager(dbfile_name,use_multiprocessing) as cursor:
+            # Don't die here if legislation.py hasn't been run separately
+            if not table_exists(cursor, 'legislation'):
+                importer = ImportLegislation(\
+                    dbfile=dbfile_name, verbose=True, cursor=cursor)
+                importer.run()
+
             create_tables_interactively(cursor,['lawreferences'],['CREATE TABLE lawreferences (lawreferenceid INTEGER PRIMARY KEY ASC, judgmentid INTEGER, legislationid INTEGER)'])
             legislation = sorted(make_unique(((unenumerate(violently_normalise(t)),(l,i)) for (t,l,i) in cursor.execute('SELECT title,link,legislationid FROM legislation')),lambda (x,_):x))
             legislation_tree.populate(legislation)

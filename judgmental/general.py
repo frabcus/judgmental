@@ -89,6 +89,12 @@ class DatabaseManager():
         self.conn.close()
         return False
 
+def table_exists(conn, tablename=False):
+    if tablename == False:
+        raise Exception('Require tablename');
+
+    return conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE \
+        type='table' AND name=:X", {"X": tablename}).fetchone()[0]
 
 
 def create_tables_interactively(cursor,names,sqlcode):
