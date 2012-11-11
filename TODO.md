@@ -10,12 +10,6 @@ it easier to maintain and develop.
 Obviously, everything wants done "as quickly as possible" :)
 
 * Site Search (using Google) *enhancement*
-* Missing indexes (don't exist right now): *bug* *important*
-    - NICC
-    - UKFTT-HESC
-    - UKFTT-TC
-    - UKIAT
-    - UKSSCSC
 * Analyse and interpret BAILII links *bug* *important*
     - Judgment reference: turn into one of our links
     - Legislation
