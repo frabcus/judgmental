@@ -264,7 +264,7 @@ def find_date(page,titletag,titletext):
         try:
             return s.replace(u"\xA0"," ")
         except UnicodeDecodeError:
-            return s            
+            return s
 
     try:
         # find it in parentheses in the title tag
