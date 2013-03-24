@@ -18,8 +18,7 @@ class TestDateParsing(unittest.TestCase):
         # with which we are concerned.
         self.test_subjects = \
             {'date': \
-                { '_scot_cases_ScotHC_2001_62.html': '2001-07-25', \
-                  '_nie_cases_NICC_2003_11.html': '2003-08-22' } \
+                { '_scot_cases_ScotHC_2001_62.html': '2001-07-25' } \
             }
 
         # Will be populated by a (page, titletag, title) (value) for
