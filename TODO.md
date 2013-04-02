@@ -10,6 +10,10 @@ it easier to maintain and develop.
 Obviously, everything wants done "as quickly as possible" :)
 
 * Site Search (using Google) *enhancement*
+* Get a better deployment workflow
+    - git-based
+    - move things around
+    - sub-repo for judgments?
 * Analyse and interpret BAILII links *bug* *important*
     - Judgment reference: turn into one of our links
     - Legislation
