@@ -201,8 +201,6 @@ def make_top_index(output_dir):
 
         missing_index.text = ""
 
-        print "make_top_index"
-
         for category in ["United Kingdom",
             "England and Wales",
             "Scotland",
@@ -221,9 +219,9 @@ def make_top_index(output_dir):
                 case.tail = "\n"
                 missing_index.append(case)
 
-        print "make_top_index"
+        print "    writing to ../index_nonlive.html";
 
-        outfile = open(os.path.join(output_dir,"../index.html"),'w')
+        outfile = open(os.path.join(output_dir,"../index_nonlive.html"),'w')
         outfile.write(etree.tostring(template, pretty_print=True))
         return (True,"")
 
@@ -238,5 +236,5 @@ class CantFindElement(ConversionError):
         self.message = "can't find element '%s'" % searchstring
 
 if __name__ == "__main__":
-    make_indexes("../judgmental.db", open("errors.log", "w"),
+    make_indexes("../judgmental_nonlive.db", open("errors.log", "w"),
         "indexes", False)

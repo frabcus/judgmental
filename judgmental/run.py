@@ -55,12 +55,14 @@ if __name__ == '__main__':
 
     # standard filenames
     file_dir = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
-    input_dir = os.path.join(file_dir, "../../bailii")
-    public_html_dir = os.path.join(file_dir, "../../public_html")
-    rel_judgment_dir = "/judgments"
+
+    input_dir = os.getenv('JUDGMENTAL_INPUT_FILES') if os.getenv('JUDGMENTAL_INPUT_FILES') else os.path.join(file_dir, "../../bailii")
+
+    public_html_dir = os.path.join(file_dir, "../public_html")
+    rel_judgment_dir = "/judgments_nonlive"
     output_dir = os.path.join(public_html_dir, rel_judgment_dir.lstrip('/'))
-    logfile_name = os.path.join(file_dir, "../../errors.log")
-    dbfile_name = os.path.join(file_dir, "../../judgmental_nonlive.db")
+    logfile_name = os.path.join(file_dir, "../logs/build_errors.log")
+    dbfile_name = os.path.join(file_dir, "../judgmental_nonlive.db")
 
     # default options
     use_multiprocessing = multi_enabled # which is defined by general.py
@@ -120,6 +122,11 @@ if __name__ == '__main__':
         else:
             print "FATAL: I don't understand the command-line argument %s"%a
             quit()
+
+    if (not os.path.exists(input_dir) and not file_list):
+        print "FATAL: Can't find files to process. \
+Use JUDGMENTAL_INPUT_FILES environment variable"
+        quit()
 
     # one argument combination is stupid
     if (do_analyse, do_crossreference, do_convert) == (True,False,True):

@@ -1,3 +1,8 @@
 *~
 *.pyc
 .*.swp
+*.db
+public_html/judgments
+public_html/judgments_nonlive
+public_html/index_nonlive.html
+logs/
