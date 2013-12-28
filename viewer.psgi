@@ -7,6 +7,7 @@ use feature ':5.10';
 
 use Log::Dispatch;
 use Plack::Builder;
+use DateTime;
 
 my $app = Plack::App::IndexFile->new({ root => './public_html' })->to_app;
 
@@ -14,7 +15,8 @@ my $app = Plack::App::IndexFile->new({ root => './public_html' })->to_app;
 
 my $logger = Log::Dispatch->new(
     outputs => [
-        [ 'File',   min_level => 'debug', filename => 'logs/logfile.log' ],
+        [ 'File',   min_level => 'debug',
+            filename => 'logs/hits.' . DateTime->now->ymd('-') . '.log' ],
         [ 'Screen', min_level => 'warning' ],
     ],
 );
