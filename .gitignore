@@ -2,6 +2,7 @@
 *.pyc
 .*.swp
 *.db
+*.db-journal
 public_html/judgments
 public_html/judgments_nonlive
 public_html/index_nonlive.html
