@@ -28,8 +28,10 @@ my $log_cb = sub {
 
     my $level = 'debug';
 
-    if ( ($line =~ /HTTP\/1.1" (4\d\d|5\d\d) /)
-        and ($line !~ /Googlebot/) ) {
+    if (
+        ($line =~ /HTTP\/1.1" (?:4\d\d|5\d\d) /)
+        and ($line !~ /Googlebot|bingbot|baidu|ahrefs|YandexBot/)
+    ) {
         $level = 'warning';
     }
 
